@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/cryptonomous/handshake/master/logo.png">
+  <img src="https://raw.githubusercontent.com/autonomousdotai/handshake-protocal/master/logo.png">
 </p>
 
 -----------------
@@ -43,7 +43,7 @@ If the Payee rejects the item/service, there will be 14 days for both parties to
 After that time, if the item/services remain rejected, the contract terminates.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/cryptonomous/handshake/master/flow.png">
+  <img src="https://raw.githubusercontent.com/autonomousdotai/handshake-protocal/master/flow.png">
 </p>
 
 #### API
