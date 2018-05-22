@@ -29,6 +29,12 @@ contract('GroupHandshake', (accounts) => {
     let tx2, hid2;
     let offchain = 1;
 
+    const S = {
+        'Inited': 0,
+        'Shaked': 1,
+        'Done': 2
+     };
+
     describe('at any time', () => {
         it('should be able to initiate handshake from first entity', async () => {
             const acceptors = ['1', '2'];
@@ -61,29 +67,26 @@ contract('GroupHandshake', (accounts) => {
             hid2 = await oc(tx2, '__shake', 'hid');
             assert.equal(Number(hid1), Number(hid2));
 
-            let handshakeOf = await hs.handshakeOf(hid1);
-            let shakers = handshakeOf[0];
-            let total = handshakeOf[1];
+            let handshakeOf = await hs.handshakes(hid1);
+            let remainingShakers = handshakeOf[1];
             let state = handshakeOf[2];
 
             await u.assertRevert(hs.shake(hid1, '0x123', offchain, { from: customer3 }));
 
-            assert.equal(shakers.toNumber(), 1);
-            assert.equal(total.toNumber(), 2);
-            assert.notEqual(shakers.toNumber(), total.toNumber());
+            assert.equal(remainingShakers.toNumber(), 1);
+            assert.equal(state.toNumber(), S['Shaked']);
 
             tx2 = await hs.shake(hid1, '0x1234', offchain, { from: owner2 });
             hid2 = await oc(tx2, '__shake', 'hid');
             assert.equal(Number(hid1), Number(hid2));
 
-            handshakeOf = await hs.handshakeOf(hid2);
-            shakers = handshakeOf[0];
-            total = handshakeOf[1];
+            handshakeOf = await hs.handshakes(hid2);
+            remainingShakers = handshakeOf[1];
             state = handshakeOf[2];
 
-            assert.equal(shakers.toNumber(), 2);
-            assert.equal(total.toNumber(), 2);
-            assert.equal(shakers.toNumber(), total.toNumber());
+            assert.equal(remainingShakers.toNumber(), 0);
+            assert.equal(state.toNumber(), S['Done']);
+            await u.assertRevert(hs.shake(hid2, '0x1234', offchain, { from: customer3 }));
 
             acceptors = [];
             tx1 = await hs.init(acceptors, offchain, { from: owner2 });
@@ -93,8 +96,8 @@ contract('GroupHandshake', (accounts) => {
             hid2 = await oc(tx2, '__shake', 'hid');
             assert.equal(Number(hid1), Number(hid2));
 
-            u.assertRevert(hs.shake(hid1, '2', offchain, { from: customer3 }));
-            u.assertRevert(hs.shake(hid1, '1', offchain, { from: owner2 }));
+            await u.assertRevert(hs.shake(hid1, '2', offchain, { from: customer3 }));
+            await u.assertRevert(hs.shake(hid1, '1', offchain, { from: owner2 }));
         });
 
         it('should fail to shake if acceptor does not match', async () => {
@@ -102,14 +105,20 @@ contract('GroupHandshake', (accounts) => {
             tx1 = await hs.init(acceptors, offchain, { from: owner1 });
             hid1 = await oc(tx1, '__init', 'hid');
 
-            u.assertRevert(hs.shake(hid1, '3', offchain, { from: customer3 }));
+            try {
+                await hs.shake(hid1, '3', offchain, { from: customer3 });
+                assert.fail();
+            } catch(e) {
+                console.log('Cannot shake')
+            }
         });
 
         it('should update done when enough shakers', async () => {
             const acceptors = ['1', '2'];
             const t1 = await hs.init(acceptors, offchain, { from: owner1 });
             const h1 = await oc(t1, '__init', 'hid');
-            assert.equal((await hs.handshakes(h1))[1], 0);
+
+            assert.equal((await hs.handshakes(h1))[1], 2);
 
             const t2 = await hs.shake(h1, '1', offchain, { from: owner2 });
             let state = await oc(t2, '__shake', 'state');
@@ -117,8 +126,7 @@ contract('GroupHandshake', (accounts) => {
             const t3 = await hs.shake(h1, '2', offchain, { from: owner3 });
             state = await oc(t3, '__shake', 'state');
 
-            assert.equal(Number(state), 2);
-
+            assert.equal(state.toNumber(), S['Done']);
         })
     })
 })

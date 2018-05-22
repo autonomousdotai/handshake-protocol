@@ -114,6 +114,7 @@ contract BettingHandshake {
 
     event __withdraw(uint hid, uint escrow, bytes32 offchain);
     
+    
     function withdraw(uint hid, bytes32 offchain) public onlyPayee(hid) {
         Bet storage b = bets[hid];
         require(b.state == S.Shaked && b.balance < b.goal);
@@ -126,6 +127,7 @@ contract BettingHandshake {
 
     event __setWinner(uint hid, uint fee, bytes32 offchain);
 
+    // referee will set the winner if there is a dispute
     function setWinner(uint hid, uint8 result, bytes32 offchain) public onlyReferee() {
         Bet storage b = bets[hid];
         require(b.state == S.Shaked && result >= uint8(Result.HomeWin) && result <= uint8(Result.Draw));
