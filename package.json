@@ -1,0 +1,31 @@
+{
+  "name": "handshake",
+  "version": "1.0.0",
+  "description": "Handshake",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cryptonomous/handshake.git"
+  },
+  "keywords": [
+    "handshake"
+  ],
+  "author": "Autonomous",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cryptonomous/handshake/issues"
+  },
+  "homepage": "https://github.com/cryptonomous/handshake#readme",
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "web3": "github:ethereum/web3.js",
+    "babel-register": "^6.26.0",
+    "babel-polyfill": "^6.23.0"
+  }
+}
