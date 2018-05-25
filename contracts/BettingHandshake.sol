@@ -6,8 +6,6 @@ contract BettingHandshake {
         uint winValue;
     }
 
-    event __debug(uint hid, uint balance, uint escrow);
-
     enum S { Inited, Shaked, Closed, Cancelled, InitiatorWon, BetorWon, Draw, Accepted, Rejected, Done }
 
     struct Bet {
@@ -105,12 +103,12 @@ contract BettingHandshake {
     event __cancelBet(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
 
     //  both of initiator or betor can cancel bet if time exceed review window
-    function cancelBet(uint hid, bytes32 offchain) public {
+    function cancelBet(uint hid, bytes32 offchain) public initiatorOrBetors(hid) {
         Bet storage b = bets[hid];
         require(now >= b.deadline + reviewWindow && b.state == S.Shaked);
 
-        returnMoney(hid);
         b.state = S.Cancelled;
+        returnMoney(hid);
 
         __cancelBet(hid, b.state, b.balance, b.escrow, offchain);
     }
@@ -238,6 +236,7 @@ contract BettingHandshake {
         require(b.state == S.Rejected && result >= uint8(S.InitiatorWon) && result <= uint8(S.Draw));
         b.state = S.Done;
         b.result = result;
+        uint fee = 0;
 
         if (result == uint8(S.InitiatorWon)) {
             sendMoneyToInitiator(hid);
@@ -249,6 +248,9 @@ contract BettingHandshake {
             returnMoney(hid);
         }
         
+        if (fee > 0) {
+            referee.transfer(fee);
+        }
         __setWinner(hid, b.state, b.balance, b.escrow, offchain);
     }
     
@@ -272,8 +274,8 @@ contract BettingHandshake {
         }
 
         if (b.escrow > 0) {
-            b.escrow = 0;
             b.initiator.transfer(b.escrow);
+            b.escrow = 0;
         }
     }
     
