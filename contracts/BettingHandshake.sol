@@ -120,15 +120,16 @@ contract BettingHandshake {
     // Initiator close bet
     function closeBet(uint hid, bytes32 offchain) public onlyInitiator(hid) {
         Bet storage b = bets[hid];
-        require(now < b.deadline * 1 seconds && b.balance < b.goal);
+        require(b.balance < b.goal);
         if (b.addresses.length == 0 && b.state == S.Inited) {
-            b.escrow = 0;
             msg.sender.transfer(b.escrow);
+            b.escrow = 0; 
             b.state = S.Closed;
 
         } else if(b.state == S.Shaked) {
             uint remainingMoney = b.escrow - ((b.balance * b.escrow) / b.goal);
             b.escrow -= remainingMoney;
+            b.goal = b.balance;
             msg.sender.transfer(remainingMoney);
         }
         

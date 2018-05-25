@@ -92,5 +92,13 @@ module.exports = {
                 if (target < now) throw Error(`Cannot increase current time(${now}) to a moment in the past(${target})`);
                 let diff = target - now;
                 this.increaseTime(diff);
+        },
+
+        gasPrice: async function (tx) {
+                const txHash = tx['receipt']['transactionHash'];
+                const log = await web3.eth.getTransaction(txHash);
+                const gasUsed = tx['receipt']['gasUsed'];
+                const gasPrice = log['gasPrice'].toNumber(); 
+                return gasUsed * gasPrice;
         }
 }

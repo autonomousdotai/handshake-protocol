@@ -64,8 +64,11 @@ contract('BettingHandshake', (accounts) => {
 
     describe('at any time', () => {
 
-        it('init handshake', async () => {
+        beforeEach( async() => {
             await createBettingHandShake();
+        });
+
+        it('init handshake', async () => {
             assert.equal(offchain, 'cts_1');
             assert.equal(hid, 0);
             assert.equal(state, 0);
@@ -75,8 +78,7 @@ contract('BettingHandshake', (accounts) => {
             assert.equal(bet[1], web3.toWei(1))
         });
 
-        it('shake handshake ', async () => {
-            await createBettingHandShake();
+        it('shake handshake ', async () => {            
             let tx = await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
             let balance = await oc(tx, '__shake', 'balance');
             let value = await hs.getWinValue(hid, { from: payer1 });
@@ -92,7 +94,6 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('cancel handshake', async () => {
-            await createBettingHandShake();
             await u.assertRevert(hs.cancelBet(hid, offchain, { from: payer2 }));
             let tx = await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
             let time = u.latestTime();
@@ -114,13 +115,15 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('close bet', async () => {
-            await createBettingHandShake();
             await u.assertRevert(hs.cancelBet(hid, offchain, { from: payer2 }));
+            const oldBalance = await web3.eth.getBalance(payee1).toNumber();
             let tx = await hs.closeBet(hid, offchain, { from: payee1 });
             let state = await oc(tx, '__closeBet', 'state');
             let balance = await oc(tx, '__closeBet', 'balance');
             let escrow = await oc(tx, '__closeBet', 'escrow');
+            const newBalance = await web3.eth.getBalance(payee1).toNumber();
 
+            assert.ok(newBalance > oldBalance);
             assert.equal(state, 2); // S.Closed
             assert.equal(balance.toNumber(), 0);
             assert.equal(escrow.toNumber(), 0);
@@ -138,7 +141,6 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('initiator won', async () => {
-            await createBettingHandShake();
             await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
 
             let time = u.latestTime();
@@ -156,7 +158,6 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('betor won', async () => {
-            await createBettingHandShake();
             await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
 
             let time = u.latestTime();
@@ -168,13 +169,12 @@ contract('BettingHandshake', (accounts) => {
             let balance = await oc(tx, '__betorWon', 'balance');
             let escrow = await oc(tx, '__betorWon', 'escrow');
 
-            assert.equal(state, 5); // S.InitiatorWon
+            assert.equal(state, 5); // S.BetorWon
             assert.equal(balance.toNumber(), 100000000000000000); // 0.1 ether
             assert.equal(escrow.toNumber(), 1000000000000000000); // 1 ether
         });
 
         it('draw', async() => {
-            await createBettingHandShake();
             await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
 
             let time = u.latestTime();
@@ -192,74 +192,95 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('withdraw', async() => {
-            await createBettingHandShake();
             await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
 
             let time = u.latestTime();
             let canSetWhoWon = time + 90000; // increase time > deadline
             await u.increaseTimeTo(canSetWhoWon);
 
-            let tx = await hs.draw(hid, offchain, { from: payee1 });
-            let state = await oc(tx, '__draw', 'state');
-            let balance = await oc(tx, '__draw', 'balance');
-            let escrow = await oc(tx, '__draw', 'escrow');
+            let tx = await hs.initiatorWon(hid, offchain, { from: payee1 });
+            let state = await oc(tx, '__initiatorWon', 'state');
+            let balance = await oc(tx, '__initiatorWon', 'balance');
+            let escrow = await oc(tx, '__initiatorWon', 'escrow');
 
-            assert.equal(state, 6); // S.Draw
+            assert.equal(state, 4); // S.InitiatorWon
             assert.equal(balance.toNumber(), 100000000000000000); // 0.1 ether
             assert.equal(escrow.toNumber(), 1000000000000000000); // 1 ether
 
+            time = u.latestTime();
+            let canWithdraw = time + 90000; // increase time > reject window
+            await u.increaseTimeTo(canWithdraw);
+            await u.assertRevert(hs.withdraw(hid, offchain, { from: payer2 }))
+
+            // balance, escrow not change because winner is initiator
+            const actualBalance = 100000000000000000;
+            const actualEscrow = 1000000000000000000;
+            tx = await hs.withdraw(hid, offchain, { from: payer1 })
+            state = await oc(tx, '__withdraw', 'state');
+            balance = await oc(tx, '__withdraw', 'balance');
+            escrow = await oc(tx, '__withdraw', 'escrow');
+
+            assert.equal(state, 7); // S.Accepted
+            assert.equal(balance.toNumber(), actualBalance); // 0.1 ether
+            assert.equal(escrow.toNumber(), actualEscrow); // 1 ether
+
+            // initiator withdraw
+            const oldBalance = web3.eth.getBalance(payee1).toNumber();
+            tx = await hs.withdraw(hid, offchain, { from: payee1 })
+            state = await oc(tx, '__withdraw', 'state');
+            balance = await oc(tx, '__withdraw', 'balance');
+            escrow = await oc(tx, '__withdraw', 'escrow');
+
+            const newBalance = web3.eth.getBalance(payee1).toNumber();
+            assert.ok(oldBalance < newBalance);
+            assert.equal(state, 9); // S.Done
+            assert.equal(balance.toNumber(), 0);
+            assert.equal(escrow.toNumber(), 0);
         });
 
-        // it('withdraw handshake', async () => {
-        //     try {
-        //         await hs.widthdraw(hid, offchain, { from: payer2 });
-        //     } catch (e) {
-        //         assert.ok('cannot withdraw bet!');
-        //     }
+        it('reject handshake', async () => {
+            await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
 
-        //     try {
-        //         await hs.widthdraw(hid, offchain, { from: payee1 });
-        //     } catch (e) {
-        //         assert.ok('cannot withdraw bet!');
-        //     }
-        // });
+            let time = u.latestTime();
+            let canSetWhoWon = time + 90000; // increase time > deadline
+            await u.increaseTimeTo(canSetWhoWon);
 
-        // it('set winner', async () => {
-        //     u.assertRevert(hs.setWinner(hid, 0, offchain, { from: payer2 }));
-        //     try {
-        //         await hs.setWinner(hid, 0, offchain, { from: payee1 });
-        //     } catch (e) {
-        //         assert.ok('cannot set winner!');
-        //     }
+            let tx = await hs.initiatorWon(hid, offchain, { from: payee1 });
+            let state = await oc(tx, '__initiatorWon', 'state');
+            let balance = await oc(tx, '__initiatorWon', 'balance');
+            let escrow = await oc(tx, '__initiatorWon', 'escrow');
 
-        //     const rootOldBalance = web3.eth.getBalance(root).toNumber(); // will receive winer fee
-        //     const payee1OldBalance = web3.eth.getBalance(payee1).toNumber();
-        //     const payer1OldBalance = web3.eth.getBalance(payer1).toNumber();
-        //     const payer2OldBalance = web3.eth.getBalance(payer2).toNumber();
+            assert.equal(state, 4); // S.InitiatorWon
+            assert.equal(balance.toNumber(), 100000000000000000); // 0.1 ether
+            assert.equal(escrow.toNumber(), 1000000000000000000); // 1 ether
 
-        //     // home win
-        //     let tx = await hs.setWinner(hid, 0, offchain, { from: root });
-        //     const txHash = tx['receipt']['transactionHash'];
-        //     const log = await web3.eth.getTransaction(txHash);
+            tx = await hs.reject(hid, offchain, { from: payer1 });
+            state = await oc(tx, '__reject', 'state');
+            balance = await oc(tx, '__reject', 'balance');
+            escrow = await oc(tx, '__reject', 'escrow');
 
-        //     const gasUsed = tx['receipt']['gasUsed'];
-        //     const gasPrice = log['gasPrice'].toNumber();
+            assert.equal(state, 8); // S.InitiatorWon
+            assert.equal(balance.toNumber(), 100000000000000000); // 0.1 ether
+            assert.equal(escrow.toNumber(), 1000000000000000000); // 1 ether
+        });
 
-        //     assert.equal(await oc(tx, '__setWinner', 'hid'), hid);
-        //     const fee = await oc(tx, '__setWinner', 'fee').toNumber();
-        //     assert.notEqual(fee, 0);
+        it('set winner', async () => {
+            await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
 
-        //     const rootNewBalance = web3.eth.getBalance(root).toNumber();
-        //     assert.equal(rootOldBalance + fee - (gasUsed * gasPrice), rootNewBalance);
+            let time = u.latestTime();
+            let canSetWhoWon = time + 90000; // increase time > deadline
+            await u.increaseTimeTo(canSetWhoWon);
 
-        //     const payee1NewBalance = web3.eth.getBalance(payee1).toNumber();
-        //     assert.notEqual(payee1OldBalance, payee1NewBalance);
+            let tx = await hs.initiatorWon(hid, offchain, { from: payee1 });
+            await hs.reject(hid, offchain, { from: payer1 });
+            await u.assertRevert(hs.setWinner(hid, 5, offchain, { from: payer2 }));
+            await u.assertRevert(hs.setWinner(hid, 4, offchain, { from: payee1 }));
 
-        //     const payer1NewBalance = web3.eth.getBalance(payer1).toNumber();
-        //     assert.equal(payer1NewBalance, payer1OldBalance);
-        //     const payer2NewBalance = web3.eth.getBalance(payer2).toNumber();
-        //     assert.equal(payer2NewBalance, payer2OldBalance);
-        // });
+            tx = await hs.setWinner(hid, 4, offchain, { from: root }); // payee1 is winner
+            let state = await oc(tx, '__setWinner', 'state');
+            let balance = await oc(tx, '__setWinner', 'balance');
+            let escrow = await oc(tx, '__setWinner', 'escrow');
+        });
     }); 
 
 
