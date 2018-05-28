@@ -441,11 +441,22 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('cannot set who won if time < deadline', async () => {
+            await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payee1 }));
+            await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payer1 }));
+            await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payer2 }));
 
+            let time = u.latestTime();
+            let canSetWhoWon = time + 90000; // > deadline
+            await u.increaseTimeTo(canSetWhoWon);
+            await hs.initiatorWon(hid, offchain, { from: payee1 });
         });
 
         it('only set who won one time', async () => {
-
+            let time = u.latestTime();
+            let canSetWhoWon = time + 90000; // > deadline
+            await u.increaseTimeTo(canSetWhoWon);
+            await hs.initiatorWon(hid, offchain, { from: payee1 });
+            await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payee1 }));
         });
 
     });
@@ -455,6 +466,18 @@ contract('BettingHandshake', (accounts) => {
         beforeEach( async() => {
             await createBettingHandShake();
         });
+
+        it('can withdraw if no one reject and time > reject window', async () => {
+
+        });
+
+        it('cannot set who won when there is someone withdraw', async () => {
+
+        });
+
+    });
+
+    describe('handshake is rejected', () => {
 
     });
 

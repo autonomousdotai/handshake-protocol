@@ -230,27 +230,12 @@ contract BettingHandshake {
 
     event __setWinner(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
 
-    // referee will set the winner if there is a dispute
+    // referee will set the winner if there is a dispute    
     function setWinner(uint hid, uint8 result, bytes32 offchain) public onlyReferee() {
         Bet storage b = bets[hid];
         require(b.state == S.Rejected && result >= uint8(S.InitiatorWon) && result <= uint8(S.Draw));
-        b.state = S.Done;
+        b.state = S.Accepted;
         b.result = result;
-        uint fee = 0;
-
-        if (result == uint8(S.InitiatorWon)) {
-            sendMoneyToInitiator(hid);
-            
-        } else if (result == uint8(S.BetorWon)) {
-            sendMoneyToBetors(hid);
-            
-        } else { 
-            returnMoney(hid);
-        }
-        
-        if (fee > 0) {
-            referee.transfer(fee);
-        }
         __setWinner(hid, b.state, b.balance, b.escrow, offchain);
     }
     
