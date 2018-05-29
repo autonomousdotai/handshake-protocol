@@ -108,10 +108,6 @@ contract BettingHandshake {
         require(now >= b.deadline + reviewWindow && b.state == S.Shaked);
 
         b.state = S.Cancelled;
-
-        // TODO: let's people withdraw money by theirself.
-        returnMoney(hid);
-
         __cancelBet(hid, b.state, b.balance, b.escrow, offchain);
     }
 
@@ -171,11 +167,15 @@ contract BettingHandshake {
     function withdraw(uint hid, bytes32 offchain) public initiatorOrBetors(hid) {
         Bet storage b = bets[hid]; 
         if (b.state != S.Accepted) {
-            require(now > b.deadline + rejectWindow);
-            if (b.state == S.InitiatorWon || b.state == S.BetorWon || b.state == S.Draw) {
-                b.result = uint8(b.state);
-                b.state = S.Accepted;
+            if(b.state == S.Cancelled) {
+                b.result = uint8(S.Draw);
+            } else {
+                require(now > b.deadline + rejectWindow);
+                if (b.state == S.InitiatorWon || b.state == S.BetorWon || b.state == S.Draw) {
+                    b.result = uint8(b.state);
+                }
             }
+            b.state = S.Accepted;
         }
         require(b.state == S.Accepted);
         if (b.result == uint8(S.InitiatorWon)) {

@@ -104,14 +104,9 @@ contract('BettingHandshake', (accounts) => {
 
             let balance = await oc(tx, '__cancelBet', 'balance');
             let escrow = await oc(tx, '__cancelBet', 'escrow');
-            let value = await hs.getWinValue(hid, { from: payee1 });
             
-            assert.equal(balance.toNumber(), 0);
-            assert.equal(escrow.toNumber(), 0);
-            assert.equal(value.toNumber(), 0);
-
-            value = await hs.getWinValue(hid, { from: payer1 });
-            assert.equal(value.toNumber(), 0);
+            assert.equal(balance.toNumber(), 100000000000000000);
+            assert.equal(escrow.toNumber(), 1000000000000000000);
         });
 
         it('close bet', async () => {
@@ -423,22 +418,15 @@ contract('BettingHandshake', (accounts) => {
             let canCancel = time + 360000; // increase time > 3 days from deadline
             await u.increaseTimeTo(canCancel);
 
-            const payee1OldBalance = web3.eth.getBalance(payee1).toNumber();
-            const payer1OleBalance = web3.eth.getBalance(payer1).toNumber();
 
             tx = await hs.cancelBet(hid, offchain, { from: payee1 });
-            const payee1NewBalance = web3.eth.getBalance(payee1).toNumber();
-            const payer1NewBalance = web3.eth.getBalance(payer1).toNumber();
-
             state = await oc(tx, '__cancelBet', 'state');
             balance = await oc(tx, '__cancelBet', 'balance');
             escrow = await oc(tx, '__cancelBet', 'escrow');
 
-            assert.ok(payer1OleBalance < payer1NewBalance);
-            assert.ok(payee1OldBalance < payee1NewBalance);
             assert.equal(state, 3); // S.Cancelled
-            assert.equal(balance.toNumber(), 0);
-            assert.equal(escrow.toNumber(), 0);
+            assert.equal(balance.toNumber(), web3.toWei(0.1));
+            assert.equal(escrow.toNumber(), 1000000000000000000);
         });
 
     });
