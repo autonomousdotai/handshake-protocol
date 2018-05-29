@@ -276,21 +276,30 @@ contract('BettingHandshake', (accounts) => {
             await u.assertRevert(hs.setWinner(hid, 5, offchain, { from: payer2 }));
             await u.assertRevert(hs.setWinner(hid, 4, offchain, { from: payee1 }));
 
-            const payeeOldBalance = await web3.eth.getBalance(payee1).toNumber();
-            const payer1OldBalance = await web3.eth.getBalance(payer1).toNumber();
             tx = await hs.setWinner(hid, 4, offchain, { from: root }); // payee1 is winner
             let state = await oc(tx, '__setWinner', 'state');
             let balance = await oc(tx, '__setWinner', 'balance');
             let escrow = await oc(tx, '__setWinner', 'escrow');
 
+            assert.equal(state, 7); // S.Accepted
+
+            const payeeOldBalance = await web3.eth.getBalance(payee1).toNumber();
+            const payer1OldBalance = await web3.eth.getBalance(payer1).toNumber();
+
+            tx = await hs.withdraw(hid, offchain, { from: payee1 });
             const payeeNewBalance = await web3.eth.getBalance(payee1).toNumber();
             const payer1NewBalance = await web3.eth.getBalance(payer1).toNumber();
 
-            assert.equal(payer1OldBalance, payer1NewBalance);
-            assert.ok(payeeOldBalance < payeeNewBalance);
+
+            state = await oc(tx, '__withdraw', 'state');
+            balance = await oc(tx, '__withdraw', 'balance');
+            escrow = await oc(tx, '__withdraw', 'escrow');
+            
             assert.equal(state, 9); // S.Done
             assert.equal(balance.toNumber(), 0);
             assert.equal(escrow.toNumber(), 0);
+            assert.equal(payer1OldBalance, payer1NewBalance);
+            assert.ok(payeeOldBalance < payeeNewBalance);
         });
     }); 
 
@@ -445,6 +454,7 @@ contract('BettingHandshake', (accounts) => {
             await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payer1 }));
             await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payer2 }));
 
+            let tx = await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
             let time = u.latestTime();
             let canSetWhoWon = time + 90000; // > deadline
             await u.increaseTimeTo(canSetWhoWon);
@@ -452,6 +462,7 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('only set who won one time', async () => {
+            let tx = await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
             let time = u.latestTime();
             let canSetWhoWon = time + 90000; // > deadline
             await u.increaseTimeTo(canSetWhoWon);

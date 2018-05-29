@@ -108,6 +108,8 @@ contract BettingHandshake {
         require(now >= b.deadline + reviewWindow && b.state == S.Shaked);
 
         b.state = S.Cancelled;
+
+        // TODO: let's people withdraw money by theirself.
         returnMoney(hid);
 
         __cancelBet(hid, b.state, b.balance, b.escrow, offchain);
@@ -168,14 +170,14 @@ contract BettingHandshake {
 
     function withdraw(uint hid, bytes32 offchain) public initiatorOrBetors(hid) {
         Bet storage b = bets[hid]; 
-        require(now > b.deadline + rejectWindow); 
-
-        if (b.state >= S.InitiatorWon && b.state <= S.Draw) {
-            b.result = uint8(b.state);
-            b.state = S.Accepted;
+        if (b.state != S.Accepted) {
+            require(now > b.deadline + rejectWindow);
+            if (b.state == S.InitiatorWon || b.state == S.BetorWon || b.state == S.Draw) {
+                b.result = uint8(b.state);
+                b.state = S.Accepted;
+            }
         }
         require(b.state == S.Accepted);
-
         if (b.result == uint8(S.InitiatorWon)) {
             if(b.initiator == msg.sender && b.escrow > 0) {
                 b.initiator.transfer(b.escrow + b.balance);
@@ -222,7 +224,7 @@ contract BettingHandshake {
 
     function reject(uint hid, bytes32 offchain) public initiatorOrBetors(hid) {
         Bet storage b = bets[hid]; 
-        require(b.state >= S.InitiatorWon && b.state <= S.Draw); 
+        require(b.state == S.InitiatorWon || b.state == S.Draw || b.state == S.BetorWon); 
 
         b.state = S.Rejected;
         __reject(hid, b.state, b.balance, b.escrow, offchain);
@@ -233,35 +235,10 @@ contract BettingHandshake {
     // referee will set the winner if there is a dispute    
     function setWinner(uint hid, uint8 result, bytes32 offchain) public onlyReferee() {
         Bet storage b = bets[hid];
-        require(b.state == S.Rejected && result >= uint8(S.InitiatorWon) && result <= uint8(S.Draw));
+        require(b.state == S.Rejected && (result == uint8(S.InitiatorWon) || result == uint8(S.Draw) || result == uint8(S.BetorWon)));
         b.state = S.Accepted;
         b.result = result;
         __setWinner(hid, b.state, b.balance, b.escrow, offchain);
-    }
-    
-    function sendMoneyToInitiator(uint hid) private {
-        Bet storage b = bets[hid];
-        b.initiator.transfer(b.escrow + b.balance);
-        b.escrow = 0;
-        b.balance = 0;
-    }
-    
-    function sendMoneyToBetors(uint hid) private {
-        Bet storage b = bets[hid];
-        for (uint index = 0; index < b.addresses.length; index++) {
-            address betor = b.addresses[index];
-            Betor storage p = b.betors[betor];
-            b.escrow -= p.winValue;
-            b.balance -= p.value;
-            betor.transfer(p.winValue);
-            p.value = 0;
-            p.winValue = 0;
-        }
-
-        if (b.escrow > 0) {
-            b.initiator.transfer(b.escrow);
-            b.escrow = 0;
-        }
     }
     
     function returnMoney(uint hid) private {
