@@ -54,12 +54,20 @@ contract PredictionHandshake {
                         m.open[msg.sender][side].stake += msg.value;
                         m.open[msg.sender][side].payout += payout;
                 } else if (role == 2) {
-                        m.matched[msg.sender][side].stake += msg.value;
-                        m.matched[msg.sender][side].payout += payout;
+
+                        // move maker order from open to matched
+                        require(maker != 0);
                         m.matched[maker][3-side].stake += (payout - msg.value);
                         m.matched[maker][3-side].payout += payout;
                         m.open[maker][3-side].stake -= (payout - msg.value);
                         m.open[maker][3-side].payout -= payout;
+                        require(m.open[maker][3-side].stake >= 0);
+                        require(m.open[maker][3-side].payout >= 0);
+
+                        // add taker to matched
+                        m.matched[msg.sender][side].stake += msg.value;
+                        m.matched[msg.sender][side].payout += payout;
+
                 }
                 __shake(hid, offchain);
         }
@@ -69,15 +77,38 @@ contract PredictionHandshake {
         function withdraw(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(now > m.closingTime);
-                if (m.outcome != 0) 
-                        msg.sender.transfer(m.matched[msg.sender][m.outcome].payout +
-                                            m.open[msg.sender][1].stake + 
-                                            m.open[msg.sender][2].stake);
-                else if (now > m.closingTime + REPORT_WINDOW) 
-                        msg.sender.transfer(m.matched[msg.sender][1].stake + 
-                                            m.matched[msg.sender][2].stake + 
-                                            m.open[msg.sender][1].stake + 
-                                            m.open[msg.sender][2].stake);
+                uint amt = 0;
+                if (m.outcome != 0) {
+
+                        // calc pmt
+                        amt += m.matched[msg.sender][m.outcome].payout;
+                        amt += m.open[msg.sender][1].stake; 
+                        amt += m.open[msg.sender][2].stake;
+
+                        // wipe pmt data
+                        m.matched[msg.sender][m.outcome].payout = 0;
+                        m.open[msg.sender][1].stake = 0; 
+                        m.open[msg.sender][2].stake = 0;
+
+                        msg.sender.transfer(amt);
+
+                } else if (now > m.closingTime + REPORT_WINDOW) {
+
+                        // calc payout
+                        amt += m.matched[msg.sender][1].stake;
+                        amt += m.matched[msg.sender][2].stake;
+                        amt += m.open[msg.sender][1].stake;
+                        amt += m.open[msg.sender][2].stake;
+
+                        // wipe pmt data
+                        m.matched[msg.sender][1].stake = 0;
+                        m.matched[msg.sender][2].stake = 0;
+                        m.open[msg.sender][1].stake = 0;
+                        m.open[msg.sender][2].stake = 0;
+
+                        msg.sender.transfer(amt);
+
+                }
                 __withdraw(hid, offchain);
         }
 
