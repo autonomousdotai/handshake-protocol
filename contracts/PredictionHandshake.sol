@@ -1,7 +1,7 @@
 /*
 * PredictionExchange is an exchange contract that doesn't accept bets on the outcomes,
-* but instead matchedes backers (those betting on odds) with layers (those offering the 
-* odds).
+* but instead matchedes backers/takers (those betting on odds) with layers/makers 
+* (those offering the odds).
 *
 * Code conventions:
 *       - side: 0 (unknown), 1 (support), 2 (against)
@@ -55,7 +55,7 @@ contract PredictionHandshake {
                         m.open[msg.sender][side].payout += payout;
                 } else if (role == 2) {
 
-                        // move maker order from open to matched
+                        // move maker's order from open to matched (could be partial)
                         require(maker != 0);
                         m.matched[maker][3-side].stake += (payout - msg.value);
                         m.matched[maker][3-side].payout += payout;
@@ -64,12 +64,24 @@ contract PredictionHandshake {
                         require(m.open[maker][3-side].stake >= 0);
                         require(m.open[maker][3-side].payout >= 0);
 
-                        // add taker to matched
+                        // add taker's order to matched
                         m.matched[msg.sender][side].stake += msg.value;
                         m.matched[msg.sender][side].payout += payout;
 
                 }
                 __shake(hid, offchain);
+        }
+
+        event __unshake(uint hid, bytes32 offchain);
+
+        // unshake() limitation: depends on offchain to calc payout
+        function unshake(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {
+                Market storage m = markets[hid];
+                require(m.open[msg.sender][side].stake >= stake);
+                require(m.open[msg.sender][side].payout >= payout);
+                m.open[msg.sender][side].stake -= stake;
+                m.open[msg.sender][side].payout -= payout;
+                __unshake(hid, offchain);
         }
 
         event __withdraw(uint hid, bytes32 offchain);
@@ -94,7 +106,7 @@ contract PredictionHandshake {
 
                 } else if (now > m.closingTime + REPORT_WINDOW) {
 
-                        // calc payout
+                        // calc pmt
                         amt += m.matched[msg.sender][1].stake;
                         amt += m.matched[msg.sender][2].stake;
                         amt += m.open[msg.sender][1].stake;
