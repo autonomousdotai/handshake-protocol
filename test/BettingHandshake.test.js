@@ -104,14 +104,9 @@ contract('BettingHandshake', (accounts) => {
 
             let balance = await oc(tx, '__cancelBet', 'balance');
             let escrow = await oc(tx, '__cancelBet', 'escrow');
-            let value = await hs.getWinValue(hid, { from: payee1 });
             
-            assert.equal(balance.toNumber(), 0);
-            assert.equal(escrow.toNumber(), 0);
-            assert.equal(value.toNumber(), 0);
-
-            value = await hs.getWinValue(hid, { from: payer1 });
-            assert.equal(value.toNumber(), 0);
+            assert.equal(balance.toNumber(), 100000000000000000);
+            assert.equal(escrow.toNumber(), 1000000000000000000);
         });
 
         it('close bet', async () => {
@@ -211,18 +206,7 @@ contract('BettingHandshake', (accounts) => {
             let canWithdraw = time + 90000; // increase time > reject window
             await u.increaseTimeTo(canWithdraw);
             await u.assertRevert(hs.withdraw(hid, offchain, { from: payer2 }))
-
-            // balance, escrow not change because winner is initiator
-            const actualBalance = 100000000000000000;
-            const actualEscrow = 1000000000000000000;
-            tx = await hs.withdraw(hid, offchain, { from: payer1 })
-            state = await oc(tx, '__withdraw', 'state');
-            balance = await oc(tx, '__withdraw', 'balance');
-            escrow = await oc(tx, '__withdraw', 'escrow');
-
-            assert.equal(state, 7); // S.Accepted
-            assert.equal(balance.toNumber(), actualBalance); // 0.1 ether
-            assert.equal(escrow.toNumber(), actualEscrow); // 1 ether
+            await u.assertRevert(hs.withdraw(hid, offchain, { from: payer1 }))
 
             // initiator withdraw
             const oldBalance = web3.eth.getBalance(payee1).toNumber();
@@ -276,21 +260,30 @@ contract('BettingHandshake', (accounts) => {
             await u.assertRevert(hs.setWinner(hid, 5, offchain, { from: payer2 }));
             await u.assertRevert(hs.setWinner(hid, 4, offchain, { from: payee1 }));
 
-            const payeeOldBalance = await web3.eth.getBalance(payee1).toNumber();
-            const payer1OldBalance = await web3.eth.getBalance(payer1).toNumber();
             tx = await hs.setWinner(hid, 4, offchain, { from: root }); // payee1 is winner
             let state = await oc(tx, '__setWinner', 'state');
             let balance = await oc(tx, '__setWinner', 'balance');
             let escrow = await oc(tx, '__setWinner', 'escrow');
 
+            assert.equal(state, 7); // S.Accepted
+
+            const payeeOldBalance = await web3.eth.getBalance(payee1).toNumber();
+            const payer1OldBalance = await web3.eth.getBalance(payer1).toNumber();
+
+            tx = await hs.withdraw(hid, offchain, { from: payee1 });
             const payeeNewBalance = await web3.eth.getBalance(payee1).toNumber();
             const payer1NewBalance = await web3.eth.getBalance(payer1).toNumber();
 
-            assert.equal(payer1OldBalance, payer1NewBalance);
-            assert.ok(payeeOldBalance < payeeNewBalance);
+
+            state = await oc(tx, '__withdraw', 'state');
+            balance = await oc(tx, '__withdraw', 'balance');
+            escrow = await oc(tx, '__withdraw', 'escrow');
+            
             assert.equal(state, 9); // S.Done
             assert.equal(balance.toNumber(), 0);
             assert.equal(escrow.toNumber(), 0);
+            assert.equal(payer1OldBalance, payer1NewBalance);
+            assert.ok(payeeOldBalance < payeeNewBalance);
         });
     }); 
 
@@ -414,22 +407,15 @@ contract('BettingHandshake', (accounts) => {
             let canCancel = time + 360000; // increase time > 3 days from deadline
             await u.increaseTimeTo(canCancel);
 
-            const payee1OldBalance = web3.eth.getBalance(payee1).toNumber();
-            const payer1OleBalance = web3.eth.getBalance(payer1).toNumber();
 
             tx = await hs.cancelBet(hid, offchain, { from: payee1 });
-            const payee1NewBalance = web3.eth.getBalance(payee1).toNumber();
-            const payer1NewBalance = web3.eth.getBalance(payer1).toNumber();
-
             state = await oc(tx, '__cancelBet', 'state');
             balance = await oc(tx, '__cancelBet', 'balance');
             escrow = await oc(tx, '__cancelBet', 'escrow');
 
-            assert.ok(payer1OleBalance < payer1NewBalance);
-            assert.ok(payee1OldBalance < payee1NewBalance);
             assert.equal(state, 3); // S.Cancelled
-            assert.equal(balance.toNumber(), 0);
-            assert.equal(escrow.toNumber(), 0);
+            assert.equal(balance.toNumber(), web3.toWei(0.1));
+            assert.equal(escrow.toNumber(), 1000000000000000000);
         });
 
     });
@@ -445,6 +431,7 @@ contract('BettingHandshake', (accounts) => {
             await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payer1 }));
             await u.assertRevert(hs.initiatorWon(hid, offchain, { from: payer2 }));
 
+            let tx = await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
             let time = u.latestTime();
             let canSetWhoWon = time + 90000; // > deadline
             await u.increaseTimeTo(canSetWhoWon);
@@ -452,6 +439,7 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('only set who won one time', async () => {
+            let tx = await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
             let time = u.latestTime();
             let canSetWhoWon = time + 90000; // > deadline
             await u.increaseTimeTo(canSetWhoWon);
@@ -468,10 +456,33 @@ contract('BettingHandshake', (accounts) => {
         });
 
         it('can withdraw if no one reject and time > reject window', async () => {
+            let tx = await hs.shake(hid, offchain, { from: payer1, value: web3.toWei(0.1) });
+            let balance = await oc(tx, '__shake', 'balance');
+            let value = await hs.getWinValue(hid, { from: payer1 });
 
+            assert.equal(balance.toNumber(), 100000000000000000);
+            assert.equal(value.toNumber(), 333333333333333300);
+
+            let time = u.latestTime();
+            let canSetWhoWon = time + 90000; // > deadline
+            await u.increaseTimeTo(canSetWhoWon);
+            await hs.initiatorWon(hid, offchain, { from: payee1 });
+
+            time = u.latestTime();
+            let rejectWindow = time + 90000;
+            await u.increaseTimeTo(rejectWindow);
+
+            await u.assertRevert(hs.withdraw(hid, offchain, { from: payer2 }));
+            await u.assertRevert(hs.withdraw(hid, offchain, { from: payer1 }));
+
+            
         });
 
         it('cannot set who won when there is someone withdraw', async () => {
+            
+        });
+
+        it('can withdraw if handshake is cancelled', async () => {
 
         });
 
@@ -479,6 +490,20 @@ contract('BettingHandshake', (accounts) => {
 
     describe('handshake is rejected', () => {
 
+    });
+
+    describe('referee set winner', () => {
+        beforeEach( async() => {
+            await createBettingHandShake();
+        });
+
+        it('if winner is initiator', () => {
+
+        });
+
+        it('if winner is betors', () => {
+
+        });
     });
 
     describe('private bet', () => {
