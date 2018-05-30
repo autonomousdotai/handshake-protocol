@@ -46,6 +46,8 @@ contract PredictionHandshake {
         }
 
         event __shake(uint hid, bytes32 offchain);
+        event __debug__make(uint hid, uint stake, uint payout, bytes32 offchain);
+        event __debug__take(uint hid, uint stake, uint payout, bytes32 offchain);
 
         function shake(uint hid, uint role, uint side, uint payout, address maker, bytes32 offchain) public payable {
                 Market storage m = markets[hid];
@@ -53,6 +55,14 @@ contract PredictionHandshake {
                 if (role == 1) {
                         m.open[msg.sender][side].stake += msg.value;
                         m.open[msg.sender][side].payout += payout;
+
+                        __debug__make(
+                                hid, 
+                                m.open[msg.sender][side].stake, 
+                                m.open[msg.sender][side].payout, 
+                                offchain
+                        );
+
                 } else if (role == 2) {
 
                         // move maker's order from open to matched (could be partial)
@@ -68,8 +78,16 @@ contract PredictionHandshake {
                         m.matched[msg.sender][side].stake += msg.value;
                         m.matched[msg.sender][side].payout += payout;
 
+                        __debug__take(
+                                hid, 
+                                m.matched[msg.sender][side].stake, 
+                                m.matched[msg.sender][side].payout, 
+                                offchain
+                        );
                 }
                 __shake(hid, offchain);
+
+
         }
 
         event __unshake(uint hid, bytes32 offchain);
@@ -86,7 +104,7 @@ contract PredictionHandshake {
 
         event __withdraw(uint hid, bytes32 offchain);
 
-        function withdraw(uint hid, bytes32 offchain) public onlyPredictor(hid) {
+        function withdraw(uint hid, bytes32 offchain) public onlyPredictor(hid) returns (uint) {
                 Market storage m = markets[hid]; 
                 require(now > m.closingTime);
                 uint amt = 0;
@@ -122,6 +140,7 @@ contract PredictionHandshake {
 
                 }
                 __withdraw(hid, offchain);
+                return amt;
         }
 
         event __report(uint hid, bytes32 offchain);
