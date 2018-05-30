@@ -28,7 +28,6 @@ contract("PredictionHandshake", (accounts) => {
         const taker3 = accounts[8]
 
         const DEADLINE = 3
-        const MAKER = 1, TAKER = 2
         const SUPPORT = 1, AGAINST = 2
         const OFFCHAIN = 1
 
@@ -56,7 +55,6 @@ contract("PredictionHandshake", (accounts) => {
                 it("should place 1st make order", async () => {
                         const i = {
                                 hid: 1,
-                                role: MAKER,
                                 side: SUPPORT, 
                                 stake: web3.toWei(0.1),
                                 payout: web3.toWei(0.3),
@@ -67,15 +65,14 @@ contract("PredictionHandshake", (accounts) => {
                                 stake: i.stake,
                                 payout: i.payout
                         }
-                        const tx = await hs.shake(i.hid, i.role, i.side, i.payout, i.maker, OFFCHAIN, {from: i.sender, value: i.stake})
-                        eq(o.stake, await oc(tx, "__debug__make", "stake"))
-                        eq(o.payout, await oc(tx, "__debug__make", "payout"))
+                        const tx = await hs.shakeByMaker(i.hid, i.side, i.payout, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__debug__shakeByMaker", "stake"))
+                        eq(o.payout, await oc(tx, "__debug__shakeByMaker", "payout"))
                 })
 
-                it("should place 2nd make order)", async () => {
+                it("should place 2nd make order", async () => {
                         const i = {
                                 hid: 1,
-                                role: MAKER,
                                 side: SUPPORT, 
                                 stake: web3.toWei(0.1),
                                 payout: web3.toWei(0.3),
@@ -86,18 +83,17 @@ contract("PredictionHandshake", (accounts) => {
                                 stake: i.stake * 2,
                                 payout: i.payout * 2
                         }
-                        const tx = await hs.shake(i.hid, i.role, i.side, i.payout, i.maker, OFFCHAIN, {from: i.sender, value: i.stake})
-                        eq(o.stake, await oc(tx, "__debug__make", "stake"))
-                        eq(o.payout, await oc(tx, "__debug__make", "payout"))
+                        const tx = await hs.shakeByMaker(i.hid, i.side, i.payout, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__debug__shakeByMaker", "stake"))
+                        eq(o.payout, await oc(tx, "__debug__shakeByMaker", "payout"))
                 })
         })
 
         describe('place take orders', () => {
 
-                it("should place 1st take order)", async () => {
+                it("should place 1st take order", async () => {
                         const i = {
                                 hid: 1,
-                                role: TAKER,
                                 side: AGAINST, 
                                 stake: web3.toWei(0.1),
                                 payout: web3.toWei(0.3),
@@ -105,12 +101,21 @@ contract("PredictionHandshake", (accounts) => {
                                 sender: taker1 
                         }
                         const o = {
-                                stake: i.stake,
-                                payout: i.payout
+                                taker_stake: i.stake,
+                                taker_payout: i.payout,
+                                maker_stake: web3.toWei(0.2),
+                                maker_payout: i.payout
                         }
-                        const tx = await hs.shake(i.hid, i.role, i.side, i.payout, i.maker, OFFCHAIN, {from: i.sender, value: i.stake})
-                        eq(o.stake, await oc(tx, "__debug__take", "stake"))
-                        eq(o.payout, await oc(tx, "__debug__take", "payout"))
+                        const tx = await hs.shakeByTaker(i.hid, i.side, i.payout, i.maker, OFFCHAIN, {from: i.sender, value: i.stake})
+
+                        eq(o.taker_stake, await oc(tx, "__debug__shakeByTaker__taker", "stake"))
+                        eq(o.taker_payout, await oc(tx, "__debug__shakeByTaker__taker", "payout"))
+
+                        eq(o.maker_stake, await oc(tx, "__debug__shakeByTaker__maker", "matched_stake"))
+                        eq(o.maker_payout, await oc(tx, "__debug__shakeByTaker__maker", "matched_payout"))
+
+                        eq(0, await oc(tx, "__debug__shakeByTaker__maker", "open_stake"))
+                        eq(o.maker_payout, await oc(tx, "__debug__shakeByTaker__maker", "open_payout"))
                 })
 
 

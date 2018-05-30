@@ -1,11 +1,14 @@
 /*
+*
 * PredictionExchange is an exchange contract that doesn't accept bets on the outcomes,
 * but instead matchedes backers/takers (those betting on odds) with layers/makers 
 * (those offering the odds).
 *
-* Code conventions:
-*       - side: 0 (unknown), 1 (support), 2 (against)
-*       - role: 0 (unknown), 1 (maker), 2 (taker)
+* Conventions:
+*
+*       side: 0 (unknown), 1 (support), 2 (against)
+*       role: 0 (unknown), 1 (maker), 2 (taker)
+*       __debug__* events will be removed prior to production deployment
 *
 */
 
@@ -46,53 +49,49 @@ contract PredictionHandshake {
         }
 
         event __shake(uint hid, bytes32 offchain);
-        event __debug__make(uint hid, uint stake, uint payout, bytes32 offchain);
-        event __debug__take(uint hid, uint stake, uint payout, bytes32 offchain);
 
-        function shake(uint hid, uint role, uint side, uint payout, address maker, bytes32 offchain) public payable {
+        event __debug__shakeByMaker(uint hid, uint stake, uint payout, bytes32 offchain);
+
+        function shakeByMaker(uint hid, uint side, uint payout, bytes32 offchain) public payable {
                 Market storage m = markets[hid];
                 require(now < m.closingTime);
-                if (role == 1) {
-                        m.open[msg.sender][side].stake += msg.value;
-                        m.open[msg.sender][side].payout += payout;
+                m.open[msg.sender][side].stake += msg.value;
+                m.open[msg.sender][side].payout += payout;
+                __shake(hid, offchain);
+                __debug__shakeByMaker(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
+        }
 
-                        __debug__make(
-                                hid, 
-                                m.open[msg.sender][side].stake, 
-                                m.open[msg.sender][side].payout, 
-                                offchain
-                        );
+        event __debug__shakeByTaker__taker(uint hid, uint stake, uint payout, bytes32 offchain);
+        event __debug__shakeByTaker__maker(uint hid, uint matched_stake, uint matched_payout, 
+                                           uint open_stake, uint open_payout, bytes32 offchain);
 
-                } else if (role == 2) {
+        function shakeByTaker(uint hid, uint side, uint payout, address maker, bytes32 offchain) public payable {
+                require(maker != 0);
+                Market storage m = markets[hid];
+                require(now < m.closingTime);
 
-                        // move maker's order from open to matched (could be partial)
-                        require(maker != 0);
-                        m.matched[maker][3-side].stake += (payout - msg.value);
-                        m.matched[maker][3-side].payout += payout;
-                        m.open[maker][3-side].stake -= (payout - msg.value);
-                        m.open[maker][3-side].payout -= payout;
-                        require(m.open[maker][3-side].stake >= 0);
-                        require(m.open[maker][3-side].payout >= 0);
+                // move maker's order from open (could be partial)
+                m.open[maker][3-side].stake -= (payout - msg.value);
+                m.open[maker][3-side].payout -= payout;
+                require(m.open[maker][3-side].stake >= 0);
+                require(m.open[maker][3-side].payout >= 0);
 
-                        // add taker's order to matched
-                        m.matched[msg.sender][side].stake += msg.value;
-                        m.matched[msg.sender][side].payout += payout;
+                // add taker's order maker's order to matched
+                m.matched[maker][3-side].stake += (payout - msg.value);
+                m.matched[maker][3-side].payout += payout;
+                m.matched[msg.sender][side].stake += msg.value;
+                m.matched[msg.sender][side].payout += payout;
 
-                        __debug__take(
-                                hid, 
-                                m.matched[msg.sender][side].stake, 
-                                m.matched[msg.sender][side].payout, 
-                                offchain
-                        );
-                }
                 __shake(hid, offchain);
 
-
+                __debug__shakeByTaker__taker(hid, m.matched[msg.sender][side].stake, 
+                                             m.matched[msg.sender][side].payout, offchain);
+                __debug__shakeByTaker__maker(hid, m.matched[maker][3-side].stake, m.matched[maker][3-side].payout, 
+                                             m.open[maker][3-side].stake, m.open[maker][3-side].payout, offchain);
         }
 
         event __unshake(uint hid, bytes32 offchain);
 
-        // unshake() limitation: depends on offchain to calc payout
         function unshake(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid];
                 require(m.open[msg.sender][side].stake >= stake);
@@ -104,10 +103,10 @@ contract PredictionHandshake {
 
         event __withdraw(uint hid, bytes32 offchain);
 
-        function withdraw(uint hid, bytes32 offchain) public onlyPredictor(hid) returns (uint) {
+        function withdraw(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(now > m.closingTime);
-                uint amt = 0;
+                uint amt;
                 if (m.outcome != 0) {
 
                         // calc pmt
@@ -140,7 +139,6 @@ contract PredictionHandshake {
 
                 }
                 __withdraw(hid, offchain);
-                return amt;
         }
 
         event __report(uint hid, bytes32 offchain);
