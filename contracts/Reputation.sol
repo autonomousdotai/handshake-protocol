@@ -7,8 +7,7 @@ contract Reputation {
 
         // TODO: anyone can add rating?
         function add(address user, uint rating) public {
-                score[user] = nRatings[user] == 0? rating: 
-                        (score[user] * nRatings[user] + rating) / (nRatings[user] + 1);
+                score[user] = (score[user] * nRatings[user] + rating) / (nRatings[user] + 1);
                 nRatings[user]++;
         }
 }
