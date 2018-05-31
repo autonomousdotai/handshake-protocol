@@ -1,240 +1,179 @@
-pragma solidity ^0.4.18;
-
 /*
 *
-* outcome: 0 (unknown), 1 (true), 2 (false)
+* PredictionExchange is an exchange contract that doesn't accept bets on the outcomes,
+* but instead matchedes backers/takers (those betting on odds) with layers/makers 
+* (those offering the odds).
 *
+* Conventions:
+*
+*       side: 0 (unknown), 1 (support), 2 (against)
+*       role: 0 (unknown), 1 (maker), 2 (taker)
+*       __debug__* events will be removed prior to production deployment
 *
 */
 
+pragma solidity ^0.4.18;
+
 contract PredictionHandshake {
 
-        struct Prediction {
-                uint outcome;
+        struct Order {
                 uint stake;
-                uint possibleWinnings;
+                uint payout;
         }
 
-        enum S { Inited, Shaked, Closed, Cancelled, InitiatorWon, PredictionWon, Draw, Accepted, Rejected, Done }
-
         struct Market {
-                address initiator;
-                uint backBalance; // bet for the outcome
-                uint layBalance; // bet against the outcome
-                uint deadline;
-                uint odds;
-                uint8 outcome;
-                S state;
-                mapping(address => Prediction) predictionOf;
+                address creator;
+                uint outcome;
+                uint fee;
+                uint reportTime;
+                uint closingTime; 
+                mapping(address => mapping(uint => Order)) open; // address => side => order
+                mapping(address => mapping(uint => Order)) matched; // address => side => order
         }
 
         Market[] public markets;
         address public root;
-        uint public reviewWindow = 3 days;
-        uint public rejectWindow = 1 days;
 
         function PredictionHandshake() public {
                 root = msg.sender;
         } 
 
-        modifier onlyInitiator(uint hid) {
-                require(msg.sender == markets[hid].initiator);
-                _;
+        event __init(uint hid, bytes32 offchain); 
+
+        function init(uint fee, uint closingTime, uint reportTime, bytes32 offchain) public payable {
+                Market memory m;
+                m.creator = msg.sender;
+                m.fee = fee;
+                m.closingTime = now + closingTime * 1 seconds;
+                m.reportTime = m.closingTime + reportTime * 1 seconds;
+                markets.push(m);
+                __init(markets.length - 1, offchain);
         }
 
-        modifier onlyPrediction(uint hid) {
-                require(markets[hid].predictionOf[msg.sender].stake != 0);
-                _;
+        event __shake(uint hid, bytes32 offchain);
+
+        event __debug__shakeByMaker(uint hid, uint stake, uint payout, bytes32 offchain);
+
+        function shakeByMaker(uint hid, uint side, uint payout, bytes32 offchain) public payable {
+                Market storage m = markets[hid];
+                require(now < m.closingTime);
+                m.open[msg.sender][side].stake += msg.value;
+                m.open[msg.sender][side].payout += payout;
+                __shake(hid, offchain);
+                __debug__shakeByMaker(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
         }
 
-        modifier initiatorOrPredictions(uint hid) {
-                require(markets[hid].predictionOf[msg.sender].stake != 0 || msg.sender == markets[hid].initiator);
+        event __debug__shakeByTaker__taker(uint hid, uint stake, uint payout, bytes32 offchain);
+        event __debug__shakeByTaker__maker(uint hid, uint matched_stake, uint matched_payout, 
+                                           uint open_stake, uint open_payout, bytes32 offchain);
+
+        function shakeByTaker(uint hid, uint side, uint payout, address maker, bytes32 offchain) public payable {
+                require(maker != 0);
+                Market storage m = markets[hid];
+                require(now < m.closingTime);
+
+                // move maker's order from open (could be partial)
+                m.open[maker][3-side].stake -= (payout - msg.value);
+                m.open[maker][3-side].payout -= payout;
+                require(m.open[maker][3-side].stake >= 0);
+                require(m.open[maker][3-side].payout >= 0);
+
+                // add taker's order maker's order to matched
+                m.matched[maker][3-side].stake += (payout - msg.value);
+                m.matched[maker][3-side].payout += payout;
+                m.matched[msg.sender][side].stake += msg.value;
+                m.matched[msg.sender][side].payout += payout;
+
+                __shake(hid, offchain);
+
+                __debug__shakeByTaker__taker(hid, m.matched[msg.sender][side].stake, 
+                                             m.matched[msg.sender][side].payout, offchain);
+                __debug__shakeByTaker__maker(hid, m.matched[maker][3-side].stake, m.matched[maker][3-side].payout, 
+                                             m.open[maker][3-side].stake, m.open[maker][3-side].payout, offchain);
+        }
+
+        event __unshake(uint hid, bytes32 offchain);
+
+        function unshake(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {
+                Market storage m = markets[hid];
+                require(m.open[msg.sender][side].stake >= stake);
+                require(m.open[msg.sender][side].payout >= payout);
+                m.open[msg.sender][side].stake -= stake;
+                m.open[msg.sender][side].payout -= payout;
+                msg.sender.transfer(stake);
+                __unshake(hid, offchain);
+        }
+
+
+        event __withdraw(uint hid, bytes32 offchain);
+
+        // as winner
+        function withdraw(uint hid, bytes32 offchain) public onlyPredictor(hid) {
+                Market storage m = markets[hid]; 
+                require(m.outcome != 0);
+                require(now > m.closingTime);
+
+                // calc market commission & winning amount
+                uint com = m.matched[msg.sender][m.outcome].payout * m.fee / 100;
+                uint amt = m.matched[msg.sender][m.outcome].payout - com;
+                amt += m.open[msg.sender][1].stake; 
+                amt += m.open[msg.sender][2].stake;
+
+                // wipe data
+                m.matched[msg.sender][m.outcome].payout = 0;
+                m.open[msg.sender][1].stake = 0; 
+                m.open[msg.sender][2].stake = 0;
+
+                msg.sender.transfer(amt);
+                root.transfer(com);
+
+                __withdraw(hid, offchain);
+        }
+
+
+        event __refund(uint hid, bytes32 offchain);
+
+        // refund when market closes and there is no outcome
+        function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {
+                Market storage m = markets[hid]; 
+                require(m.outcome == 0);
+                require(now > m.reportTime);
+
+                // calc refund amt
+                uint amt;
+                amt += m.matched[msg.sender][1].stake;
+                amt += m.matched[msg.sender][2].stake;
+                amt += m.open[msg.sender][1].stake;
+                amt += m.open[msg.sender][2].stake;
+
+                // wipe data
+                m.matched[msg.sender][1].stake = 0;
+                m.matched[msg.sender][2].stake = 0;
+                m.open[msg.sender][1].stake = 0;
+                m.open[msg.sender][2].stake = 0;
+
+                msg.sender.transfer(amt);
+
+                __refund(hid, offchain);
+        }
+
+        event __report(uint hid, bytes32 offchain);
+
+        function report(uint hid, uint outcome, bytes32 offchain) public onlyRoot() {
+                markets[hid].outcome = outcome;
+                __report(hid, offchain);
+        }
+
+        modifier onlyPredictor(uint hid) {
+                require(markets[hid].matched[msg.sender][1].stake > 0 || 
+                        markets[hid].matched[msg.sender][2].stake > 0 || 
+                        markets[hid].open[msg.sender][1].stake > 0 || 
+                        markets[hid].open[msg.sender][2].stake > 0);
                 _;
         }
 
         modifier onlyRoot() {
                 require(msg.sender == root);
                 _;
-        }
-
-        event __init(uint hid, bytes32 offchain); 
-
-        function init(uint deadline, uint odds, bytes32 offchain) public payable {
-                Market memory m;
-                m.initiator = msg.sender;
-                m.deadline = now + deadline * 1 seconds;
-                m.odds = odds;
-                m.state = S.Inited;
-                markets.push(m);
-
-                __init(markets.length - 1, offchain);
-        }
-
-        event __shake(uint hid, bytes32 offchain);
-
-        function shake(uint hid, uint outcome, bytes32 offchain) public payable {
-                Market storage m = markets[hid];
-
-                require(now < m.deadline);
-                require(m.state == S.Inited || m.state == S.Shaked);
-                if (m.predictionOf[msg.sender].stake == 0)
-                        m.predictionOf[msg.sender].outcome = outcome;
-                else
-                        require(m.predictionOf[msg.sender].outcome == outcome);
-
-                m.predictionOf[msg.sender].stake += msg.value;
-
-                if (outcome == 1)
-                        m.predictionOf[msg.sender].possibleWinnings += msg.value;
-                else if (outcome == 2)
-                        m.predictionOf[msg.sender].possibleWinnings += msg.value * m.odds;
-
-                m.backBalance += msg.value;
-                m.state = S.Shaked;
-
-                __shake(hid, offchain);
-        }
-
-        /*
-
-        event __closeMarket(uint hid, S state, uint backBalance, uint escrow, bytes32 offchain);
-
-        // Initiator close bet
-        function closeMarket(uint hid, bytes32 offchain) public onlyInitiator(hid) {
-                Market storage b = markets[hid];
-                require(b.backBalance < b.goal);
-                if (b.predictors.length == 0 && b.state == S.Inited) {
-                        msg.sender.transfer(b.escrow);
-                        b.escrow = 0; 
-                        b.state = S.Closed;
-
-                } else if(b.state == S.Shaked) {
-                        uint remainingMoney = b.escrow - ((b.backBalance * b.escrow) / b.goal);
-                        b.escrow -= remainingMoney;
-                        b.goal = b.backBalance;
-                        msg.sender.transfer(remainingMoney);
-                }
-
-                __closeMarket(hid, b.state, b.backBalance, b.escrow, offchain);
-        }
-
-        event __initiatorWon(uint hid, S state, uint backBalance, uint escrow, bytes32 offchain); 
-
-        function initiatorWon(uint hid, bytes32 offchain) public initiatorOrPredictions(hid) {
-                Market storage b = markets[hid]; 
-                require(b.state == S.Shaked && now > b.deadline * 1 seconds); 
-                b.state = S.InitiatorWon; 
-
-                __initiatorWon(hid, b.state, b.backBalance, b.escrow, offchain);
-        }
-
-        event __betorWon(uint hid, S state, uint backBalance, uint escrow, bytes32 offchain); 
-
-        function betorWon(uint hid, bytes32 offchain) public initiatorOrPredictions(hid) {
-                Market storage b = markets[hid]; 
-                require(b.state == S.Shaked && now > b.deadline * 1 seconds);
-                b.state = S.PredictionWon;
-
-                __betorWon(hid, b.state, b.backBalance, b.escrow, offchain);
-        }
-
-        event __draw(uint hid, S state, uint backBalance, uint escrow, bytes32 offchain); 
-
-        function draw(uint hid, bytes32 offchain) public initiatorOrPredictions(hid) {
-                Market storage b = markets[hid]; 
-                require(b.state == S.Shaked && now > b.deadline * 1 seconds); 
-                b.state = S.Draw;
-
-                __draw(hid, b.state, b.backBalance, b.escrow, offchain);
-        }
-
-        event __reject(uint hid, S state, uint backBalance, uint escrow, bytes32 offchain);
-
-        function reject(uint hid, bytes32 offchain) public initiatorOrPredictions(hid) {
-                Market storage b = markets[hid]; 
-                require(b.state == S.InitiatorWon || b.state == S.Draw || b.state == S.PredictionWon); 
-
-                b.state = S.Rejected;
-                __reject(hid, b.state, b.backBalance, b.escrow, offchain);
-        }
-
-        */
-
-        event __withdraw(uint hid, S state, uint backBalance, uint escrow, bytes32 offchain);
-
-        function withdraw(uint hid, bytes32 offchain) public initiatorOrPredictions(hid) {
-                Market storage b = markets[hid]; 
-                if (b.state != S.Accepted) {
-                        if(b.state == S.Cancelled) {
-                                b.outcome = uint8(S.Draw);
-                        } else {
-                                require(now > b.deadline + rejectWindow);
-                                if (b.state == S.InitiatorWon || b.state == S.PredictionWon || b.state == S.Draw) {
-                                        b.outcome = uint8(b.state);
-                                }
-                        }
-                        b.state = S.Accepted;
-                }
-                require(b.state == S.Accepted);
-                if (b.outcome == uint8(S.InitiatorWon)) {
-                        if(b.initiator == msg.sender && b.escrow > 0) {
-                                b.initiator.transfer(b.escrow + b.backBalance);
-                                b.escrow = 0;
-                                b.backBalance = 0;
-                        }
-
-                } else if (b.outcome == uint8(S.PredictionWon)) {
-                        if (b.predictionOf[msg.sender].stake > 0) {
-                                if(b.backBalance > 0) {
-                                        Prediction storage p = b.predictionOf[msg.sender];
-                                        b.escrow -= p.possibleWinnings;
-                                        b.backBalance -= p.stake;
-                                        msg.sender.transfer(p.possibleWinnings);
-                                        p.stake = 0;
-                                        p.possibleWinnings = 0;
-                                }
-                        }
-
-                } else if (b.outcome == uint8(S.Draw)) { 
-                        if(b.initiator == msg.sender && b.escrow > 0) {
-                                b.initiator.transfer(b.escrow);
-                                b.escrow = 0;
-
-                        } else if (b.predictionOf[msg.sender].stake > 0) {
-                                if(b.backBalance > 0) {
-                                        Prediction storage p1 = b.predictionOf[msg.sender];
-                                        b.backBalance -= p1.stake;
-                                        msg.sender.transfer(p1.stake);
-                                        p1.stake = 0;
-                                        p1.possibleWinnings = 0;
-                                }
-                        }
-                }
-
-                if (b.backBalance == 0 && b.escrow == 0) {
-                        b.state = S.Done;   
-                }
-
-                __withdraw(hid, b.state, b.backBalance, b.escrow, offchain);
-        }
-
-
-        event __setWinner(uint hid, S state, uint backBalance, uint escrow, bytes32 offchain);
-
-        // root will set the winner if there is a dispute    
-        function setWinner(uint hid, uint8 outcome, bytes32 offchain) public onlyRoot() {
-                Market storage b = markets[hid];
-                require(b.state == S.Rejected && (outcome == uint8(S.InitiatorWon) || outcome == uint8(S.Draw) || outcome == uint8(S.PredictionWon)));
-                b.state = S.Accepted;
-                b.outcome = outcome;
-                __setWinner(hid, b.state, b.backBalance, b.escrow, offchain);
-        }
-
-        function possibleWinnings(uint hid) public view returns (uint) {
-                Market storage b = markets[hid];
-                if (msg.sender == b.initiator) {
-                        return b.backBalance;
-                }
-                return b.predictionOf[msg.sender].possibleWinnings;
         }
 }
