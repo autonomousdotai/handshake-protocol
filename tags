@@ -1888,6 +1888,7 @@ __init	contracts/PayableHandshake.sol	/^    event __init(uint hid, address payee
 __init	contracts/PredictionHandshake.sol	/^        event __init(uint hid, bytes32 offchain); $/;"	e
 __initiatorWon	contracts/BettingHandshake.sol	/^    event __initiatorWon(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
 __refund	contracts/CrowdsaleHandshake.sol	/^    event __refund(uint hid, S state, bytes32 offchain);$/;"	e
+__refund	contracts/PredictionHandshake.sol	/^        event __refund(uint hid, bytes32 offchain);$/;"	e
 __reject	contracts/BettingHandshake.sol	/^    event __reject(uint hid, S state, uint balance, uint escrow, bytes32 offchain);$/;"	e
 __reject	contracts/ExchangeHandshake.sol	/^    event __reject(uint hid, bytes32 offchain);$/;"	e
 __reject	contracts/PayableHandshake.sol	/^    event __reject(uint hid, bytes32 offchain);$/;"	e
@@ -6072,7 +6073,7 @@ init	contracts/BasicHandshake.sol	/^    function init(address acceptor, bytes32 
 init	contracts/ExchangeHandshake.sol	/^    function init($/;"	f
 init	contracts/GroupHandshake.sol	/^    function init(bytes32[] acceptors, bytes32 offchain) public {$/;"	f
 init	contracts/PayableHandshake.sol	/^    function init($/;"	f
-init	contracts/PredictionHandshake.sol	/^        function init(uint closingTime, bytes32 offchain) public payable {$/;"	f
+init	contracts/PredictionHandshake.sol	/^        function init(uint fee, uint closingTime, uint reportTime, bytes32 offchain) public payable {$/;"	f
 init	node_modules/babel-core/lib/transformation/file/options/option-manager.js	/^  OptionManager.prototype.init = function init() {$/;"	m	class:OptionManager
 init	node_modules/babel-core/lib/transformation/plugin.js	/^  Plugin.prototype.init = function init(loc, i) {$/;"	m	class:Plugin
 init	node_modules/babel-traverse/lib/scope/index.js	/^  Scope.prototype.init = function init() {$/;"	m	class:Scope
@@ -8012,6 +8013,7 @@ reference	node_modules/babel-traverse/lib/scope/binding.js	/^  Binding.prototype
 references	node_modules/babel-traverse/lib/scope/index.js	/^    var state = {$/;"	p	class:state
 referencesImport	node_modules/babel-traverse/lib/path/introspection.js	/^function referencesImport(moduleSource, importName) {$/;"	f
 refund	contracts/CrowdsaleHandshake.sol	/^    function refund(uint hid, bytes32 offchain) public {$/;"	f
+refund	contracts/PredictionHandshake.sol	/^        function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {$/;"	f
 reg	node_modules/babylon/lib/index.js	/^  shy: "\\xAD",$/;"	p	class:XHTMLEntities
 regExpEscape	node_modules/minimatch/minimatch.js	/^function regExpEscape (s) {$/;"	f	function:function
 regexSingleEscape	node_modules/jsesc/jsesc.js	/^	var regexSingleEscape = \/["'\\\\\\b\\f\\n\\r\\t]\/;$/;"	v

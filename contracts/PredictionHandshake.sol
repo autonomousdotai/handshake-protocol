@@ -22,9 +22,11 @@ contract PredictionHandshake {
         }
 
         struct Market {
-                address initiator;
-                uint closingTime; 
+                address creator;
                 uint outcome;
+                uint fee;
+                uint reportTime;
+                uint closingTime; 
                 mapping(address => mapping(uint => Order)) open; // address => side => order
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
         }
@@ -32,18 +34,18 @@ contract PredictionHandshake {
         Market[] public markets;
         address public root;
 
-        uint public REPORT_WINDOW = 4 hours;
-
         function PredictionHandshake() public {
                 root = msg.sender;
         } 
 
         event __init(uint hid, bytes32 offchain); 
 
-        function init(uint closingTime, bytes32 offchain) public payable {
+        function init(uint fee, uint closingTime, uint reportTime, bytes32 offchain) public payable {
                 Market memory m;
-                m.initiator = msg.sender;
+                m.creator = msg.sender;
+                m.fee = fee;
                 m.closingTime = now + closingTime * 1 seconds;
+                m.reportTime = m.closingTime + reportTime * 1 seconds;
                 markets.push(m);
                 __init(markets.length - 1, offchain);
         }
@@ -98,47 +100,61 @@ contract PredictionHandshake {
                 require(m.open[msg.sender][side].payout >= payout);
                 m.open[msg.sender][side].stake -= stake;
                 m.open[msg.sender][side].payout -= payout;
+                msg.sender.transfer(stake);
                 __unshake(hid, offchain);
         }
 
+
         event __withdraw(uint hid, bytes32 offchain);
 
+        // as winner
         function withdraw(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
+                require(m.outcome != 0);
                 require(now > m.closingTime);
-                uint amt;
-                if (m.outcome != 0) {
 
-                        // calc pmt
-                        amt += m.matched[msg.sender][m.outcome].payout;
-                        amt += m.open[msg.sender][1].stake; 
-                        amt += m.open[msg.sender][2].stake;
+                // calc market commission & winning amount
+                uint com = m.matched[msg.sender][m.outcome].payout * m.fee / 100;
+                uint amt = m.matched[msg.sender][m.outcome].payout - com;
+                amt += m.open[msg.sender][1].stake; 
+                amt += m.open[msg.sender][2].stake;
 
-                        // wipe pmt data
-                        m.matched[msg.sender][m.outcome].payout = 0;
-                        m.open[msg.sender][1].stake = 0; 
-                        m.open[msg.sender][2].stake = 0;
+                // wipe data
+                m.matched[msg.sender][m.outcome].payout = 0;
+                m.open[msg.sender][1].stake = 0; 
+                m.open[msg.sender][2].stake = 0;
 
-                        msg.sender.transfer(amt);
+                msg.sender.transfer(amt);
+                root.transfer(com);
 
-                } else if (now > m.closingTime + REPORT_WINDOW) {
-
-                        // calc pmt
-                        amt += m.matched[msg.sender][1].stake;
-                        amt += m.matched[msg.sender][2].stake;
-                        amt += m.open[msg.sender][1].stake;
-                        amt += m.open[msg.sender][2].stake;
-
-                        // wipe pmt data
-                        m.matched[msg.sender][1].stake = 0;
-                        m.matched[msg.sender][2].stake = 0;
-                        m.open[msg.sender][1].stake = 0;
-                        m.open[msg.sender][2].stake = 0;
-
-                        msg.sender.transfer(amt);
-
-                }
                 __withdraw(hid, offchain);
+        }
+
+
+        event __refund(uint hid, bytes32 offchain);
+
+        // refund when market closes and there is no outcome
+        function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {
+                Market storage m = markets[hid]; 
+                require(m.outcome == 0);
+                require(now > m.reportTime);
+
+                // calc refund amt
+                uint amt;
+                amt += m.matched[msg.sender][1].stake;
+                amt += m.matched[msg.sender][2].stake;
+                amt += m.open[msg.sender][1].stake;
+                amt += m.open[msg.sender][2].stake;
+
+                // wipe data
+                m.matched[msg.sender][1].stake = 0;
+                m.matched[msg.sender][2].stake = 0;
+                m.open[msg.sender][1].stake = 0;
+                m.open[msg.sender][2].stake = 0;
+
+                msg.sender.transfer(amt);
+
+                __refund(hid, offchain);
         }
 
         event __report(uint hid, bytes32 offchain);
