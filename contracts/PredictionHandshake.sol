@@ -33,6 +33,7 @@ contract PredictionHandshake {
 
         Market[] public markets;
         address public root;
+        uint public NETWORK_FEE = 20; // 20%
 
         function PredictionHandshake() public {
                 root = msg.sender;
@@ -53,6 +54,7 @@ contract PredictionHandshake {
         event __init(uint hid, bytes32 offchain);
         event __debug__init(uint hid, uint stake, uint payout, bytes32 offchain);
 
+        // market maker
         function init(uint hid, uint side, uint payout, bytes32 offchain) public payable {
                 Market storage m = markets[hid];
                 require(now < m.closingTime);
@@ -64,6 +66,7 @@ contract PredictionHandshake {
 
         event __uninit(uint hid, bytes32 offchain);
 
+        // market maker cancels order
         function uninit(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid];
                 require(m.open[msg.sender][side].stake >= stake);
@@ -79,6 +82,7 @@ contract PredictionHandshake {
         event __debug__shake__maker(uint hid, uint matched_stake, uint matched_payout, 
                                            uint open_stake, uint open_payout, bytes32 offchain);
 
+        // market taker
         function shake(uint hid, uint side, uint payout, address maker, bytes32 offchain) public payable {
                 require(maker != 0);
                 Market storage m = markets[hid];
@@ -107,15 +111,17 @@ contract PredictionHandshake {
 
         event __collect(uint hid, bytes32 offchain);
 
-        // collect winning payout
+        // collect payout
         function collect(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(m.outcome != 0);
                 require(now > m.closingTime);
 
-                // calc market commission & winning amount
-                uint com = m.matched[msg.sender][m.outcome].payout * m.fee / 100;
-                uint amt = m.matched[msg.sender][m.outcome].payout - com;
+                // calc network commission, market commission and winnings
+                uint marketComm = (m.matched[msg.sender][m.outcome].payout * m.fee) / 100;
+                uint networkComm = (marketComm * NETWORK_FEE) / 100;
+                uint amt = m.matched[msg.sender][m.outcome].payout;
+
                 amt += m.open[msg.sender][1].stake; 
                 amt += m.open[msg.sender][2].stake;
 
@@ -124,8 +130,9 @@ contract PredictionHandshake {
                 m.open[msg.sender][1].stake = 0; 
                 m.open[msg.sender][2].stake = 0;
 
-                msg.sender.transfer(amt);
-                root.transfer(com);
+                msg.sender.transfer(amt - marketComm);
+                m.creator.transfer(marketComm - networkComm);
+                root.transfer(networkComm);
 
                 __collect(hid, offchain);
         }
@@ -133,7 +140,7 @@ contract PredictionHandshake {
 
         event __refund(uint hid, bytes32 offchain);
 
-        // refund when market closes and there is no outcome
+        // refund stakes when market closes and there is no outcome
         function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(m.outcome == 0);
@@ -159,6 +166,7 @@ contract PredictionHandshake {
 
         event __report(uint hid, bytes32 offchain);
 
+        // report outcome
         function report(uint hid, uint outcome, bytes32 offchain) public onlyRoot() {
                 markets[hid].outcome = outcome;
                 __report(hid, offchain);
