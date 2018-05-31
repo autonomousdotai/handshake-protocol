@@ -38,7 +38,7 @@ contract("Reputation", (accounts) => {
                                 score: 50
                         }
                         const tx = await hs.add(i.user, i.rating, { from: i.reviewer})
-                        eq(o.score, await oc(tx, "__add", "score"))
+                        eq(o.score, await hs.score.call(i.user))
                 })
                 it('should have score = average of the first two', async () => {
                         const i = {
@@ -50,7 +50,7 @@ contract("Reputation", (accounts) => {
                                 score: 45
                         }
                         const tx = await hs.add(i.user, i.rating, { from: i.reviewer})
-                        eq(o.score, await oc(tx, "__add", "score"))
+                        eq(o.score, await hs.score.call(i.user))
                 })
                 it('should have score = average of the first three', async () => {
                         const i = {
@@ -62,7 +62,7 @@ contract("Reputation", (accounts) => {
                                 score: 43
                         }
                         const tx = await hs.add(i.user, i.rating, { from: i.reviewer})
-                        eq(o.score, await oc(tx, "__add", "score"))
+                        eq(o.score, await hs.score.call(i.user))
                 })
         })
 

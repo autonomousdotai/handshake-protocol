@@ -1869,7 +1869,6 @@ _0777	node_modules/mkdirp/test/umask_sync.js	/^var _0777 = parseInt('0777', 8);$
 __	node_modules/lodash/fp/_mapping.js	/^  'property': 'get',$/;"	p	class:exports.aliasToReal
 __accept	contracts/ExchangeHandshake.sol	/^    event __accept(uint hid, bytes32 offchain);$/;"	e
 __accept	contracts/PayableHandshake.sol	/^    event __accept(uint hid, bytes32 offchain);$/;"	e
-__add	contracts/Reputation.sol	/^        event __add(uint score);$/;"	e
 __betorWon	contracts/BettingHandshake.sol	/^    event __betorWon(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
 __cancel	contracts/CrowdsaleHandshake.sol	/^    event __cancel(uint hid, S state, bytes32 offchain);$/;"	e
 __cancel	contracts/ExchangeHandshake.sol	/^    event __cancel(uint hid, bytes32 offchain);$/;"	e
