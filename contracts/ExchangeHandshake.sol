@@ -178,6 +178,14 @@ contract ExchangeHandshake {
                 || p.state == S.Shaked);
         p.state = S.Cancelled;
         msg.sender.transfer(p.value);
+
         __cancel(hid, offchain);
     }
+
+    //get handshake stage by hid
+     function getState(uint hid) public constant returns(uint8){
+        Exchange storage p = ex[hid];
+        return uint8(p.state);
+     }
+
 }
