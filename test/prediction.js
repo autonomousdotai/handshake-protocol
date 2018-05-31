@@ -36,7 +36,7 @@ contract("PredictionHandshake", (accounts) => {
                 hs = await p2p.deployed();
         })
 
-        describe('create two test prediction markets', () => {
+        describe('create two prediction markets', () => {
 
                 it('should create the first prediction market', async () => {
                         const i = {
@@ -68,15 +68,14 @@ contract("PredictionHandshake", (accounts) => {
 
         })
 
-        describe('place make orders', () => {
+        describe('init/make orders', () => {
 
-                it("should place 1st make order", async () => {
+                it("should init/make 1st order", async () => {
                         const i = {
                                 hid: 1,
                                 side: SUPPORT, 
                                 stake: web3.toWei(0.1),
                                 payout: web3.toWei(0.3),
-                                maker: 0,
                                 sender: maker1 
                         }
                         const o = {
@@ -88,13 +87,12 @@ contract("PredictionHandshake", (accounts) => {
                         eq(o.payout, await oc(tx, "__debug__init", "payout"))
                 })
 
-                it("should place 2nd make order", async () => {
+                it("should init/make 2nd order", async () => {
                         const i = {
                                 hid: 1,
                                 side: SUPPORT, 
                                 stake: web3.toWei(0.1),
                                 payout: web3.toWei(0.3),
-                                maker: 0,
                                 sender: maker1 
                         }
                         const o = {
@@ -104,6 +102,40 @@ contract("PredictionHandshake", (accounts) => {
                         const tx = await hs.init(i.hid, i.side, i.payout, OFFCHAIN, {from: i.sender, value: i.stake})
                         eq(o.stake, await oc(tx, "__debug__init", "stake"))
                         eq(o.payout, await oc(tx, "__debug__init", "payout"))
+                })
+
+                it("should init/make 3rd order", async () => {
+                        const i = {
+                                hid: 1,
+                                side: AGAINST, 
+                                stake: web3.toWei(0.2),
+                                payout: web3.toWei(0.4),
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.payout
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.payout, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__debug__init", "stake"))
+                        eq(o.payout, await oc(tx, "__debug__init", "payout"))
+                })
+
+                it("should uninit/cancel 3rd order", async () => {
+                        const i = {
+                                hid: 1,
+                                side: AGAINST, 
+                                stake: web3.toWei(0.2),
+                                payout: web3.toWei(0.4),
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: 0,
+                                payout: 0
+                        }
+                        const tx = await hs.uninit(i.hid, i.side, i.stake, i.payout, OFFCHAIN, {from: i.sender})
+                        eq(o.stake, await oc(tx, "__debug__uninit", "stake"))
+                        eq(o.payout, await oc(tx, "__debug__uninit", "payout"))
                 })
         })
 

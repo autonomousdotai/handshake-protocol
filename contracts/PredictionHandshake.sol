@@ -65,6 +65,7 @@ contract PredictionHandshake {
         }
 
         event __uninit(uint hid, bytes32 offchain);
+        event __debug__uninit(uint hid, uint stake, uint payout, bytes32 offchain);
 
         // market maker cancels order
         function uninit(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {
@@ -75,6 +76,7 @@ contract PredictionHandshake {
                 m.open[msg.sender][side].payout -= payout;
                 msg.sender.transfer(stake);
                 __uninit(hid, offchain);
+                __debug__uninit(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
         }
 
         event __shake(uint hid, bytes32 offchain);
@@ -111,7 +113,7 @@ contract PredictionHandshake {
 
         event __collect(uint hid, bytes32 offchain);
 
-        // collect payout
+        // collect payouts & outstanding stakes (if there is outcome)
         function collect(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(m.outcome != 0);
@@ -140,7 +142,7 @@ contract PredictionHandshake {
 
         event __refund(uint hid, bytes32 offchain);
 
-        // refund stakes when market closes and there is no outcome
+        // refund stakes when market closes (if there is no outcome)
         function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(m.outcome == 0);

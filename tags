@@ -1476,6 +1476,8 @@ RegExpProto	node_modules/core-js/modules/es7.string.match-all.js	/^var RegExpPro
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^  function Renamer(binding, oldName, newName) {$/;"	c	class:Renamer
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^  }$/;"	c
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^var Renamer = function () {$/;"	f
+Reputation	contracts/Reputation.sol	/^contract Reputation {$/;"	c
+Reputation	migrations/8_reputation.js	/^var Reputation = artifacts.require('Reputation');$/;"	v
 RequestManager	node_modules/web3/lib/web3.js	/^var RequestManager = require('.\/web3\/requestmanager');$/;"	v
 RequestManager	node_modules/web3/lib/web3/requestmanager.js	/^var RequestManager = function (provider) {$/;"	c
 RestElement	node_modules/babel-generator/lib/generators/types.js	/^function RestElement(node) {$/;"	c
@@ -1867,6 +1869,7 @@ _0777	node_modules/mkdirp/test/umask_sync.js	/^var _0777 = parseInt('0777', 8);$
 __	node_modules/lodash/fp/_mapping.js	/^  'property': 'get',$/;"	p	class:exports.aliasToReal
 __accept	contracts/ExchangeHandshake.sol	/^    event __accept(uint hid, bytes32 offchain);$/;"	e
 __accept	contracts/PayableHandshake.sol	/^    event __accept(uint hid, bytes32 offchain);$/;"	e
+__add	contracts/Reputation.sol	/^        event __add(uint score);$/;"	e
 __betorWon	contracts/BettingHandshake.sol	/^    event __betorWon(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
 __cancel	contracts/CrowdsaleHandshake.sol	/^    event __cancel(uint hid, S state, bytes32 offchain);$/;"	e
 __cancel	contracts/ExchangeHandshake.sol	/^    event __cancel(uint hid, bytes32 offchain);$/;"	e
@@ -1879,6 +1882,7 @@ __createMarket	contracts/PredictionHandshake.sol	/^        event __createMarket(
 __debug__init	contracts/PredictionHandshake.sol	/^        event __debug__init(uint hid, uint stake, uint payout, bytes32 offchain);$/;"	e
 __debug__shake__maker	contracts/PredictionHandshake.sol	/^        event __debug__shake__maker(uint hid, uint matched_stake, uint matched_payout, $/;"	e
 __debug__shake__taker	contracts/PredictionHandshake.sol	/^        event __debug__shake__taker(uint hid, uint stake, uint payout, bytes32 offchain);$/;"	e
+__debug__uninit	contracts/PredictionHandshake.sol	/^        event __debug__uninit(uint hid, uint stake, uint payout, bytes32 offchain);$/;"	e
 __deliver	contracts/PayableHandshake.sol	/^    event __deliver(uint hid, bytes32 offchain);$/;"	e
 __draw	contracts/BettingHandshake.sol	/^    event __draw(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
 __init	contracts/BasicHandshake.sol	/^    event __init(uint hid, bytes32 offchain);$/;"	e
@@ -2863,6 +2867,7 @@ accessor	node_modules/private/private.js	/^  function accessor(object) {$/;"	f	f
 accessor.forget	node_modules/private/private.js	/^  }$/;"	f
 acirc	node_modules/babylon/lib/index.js	/^  aacute: "\\xE1",$/;"	p	class:XHTMLEntities
 acute	node_modules/babylon/lib/index.js	/^  sup3: "\\xB3",$/;"	p	class:XHTMLEntities
+add	contracts/Reputation.sol	/^        function add(address user, uint rating) public {$/;"	f
 add	node_modules/babel-generator/lib/node/index.js	/^  function add(type, func) {$/;"	f	function:expandAliases
 add	node_modules/babel-traverse/lib/path/family.js	/^  var add = function add(path) {$/;"	f	function:getCompletionRecords
 add	node_modules/lodash/_SetCache.js	/^SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;$/;"	m	class:SetCache
@@ -6912,6 +6917,7 @@ module.exports	migrations/4_group.js	/^var GroupHandshake = artifacts.require('G
 module.exports	migrations/5_crowdsale.js	/^var CrowdsaleHandshake = artifacts.require('CrowdsaleHandshake');$/;"	f
 module.exports	migrations/6_exchange.js	/^var ExchangeHandshake = artifacts.require('ExchangeHandshake');$/;"	f
 module.exports	migrations/7_prediction.js	/^var PredictionHandshake = artifacts.require('PredictionHandshake');$/;"	f
+module.exports	migrations/8_reputation.js	/^var Reputation = artifacts.require('Reputation');$/;"	f
 module.exports	node_modules/ansi-regex/index.js	/^'use strict';$/;"	f
 module.exports	node_modules/concat-map/index.js	/^module.exports = function (xs, fn) {$/;"	f
 module.exports	node_modules/core-js/build/index.js	/^  temp = require('temp');$/;"	f
