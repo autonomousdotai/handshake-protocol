@@ -51,6 +51,11 @@ contract("ExchangeHandshake", (accounts) => {
             fee1 = await oc(tx1, "__setFee", "feeRefund")
             eq(Number(fee1), feeRefund)
         })
+
+        it('should not able set exchange fee by normal user', async () => {
+            //eq(await hs.owner({}), root)
+            await  u.assertRevert(hs.setFee(fee, feeRefund, { from: coinOwner1 }))
+        })
     })
 
 
@@ -180,6 +185,35 @@ contract("ExchangeHandshake", (accounts) => {
 
             cancelHid1 = await oc(tx1, "__cancel", "hid")
             eq(Number(hid1), Number(cancelHid1))
+
+            tx1 = await hs.getState(hid1)
+            eq(5, Number(tx1)) //5:cancel stage
+
+        })
+
+        it("should get back coin after cancel", async () => {
+            let blb2= u.balance(coinOwner1)
+            //console.log(Number(blb2))
+
+            tx1 = await hs.initByCoinOwner(exchanger1,initiatorFeeRefund1, serviceValue, offchain, { from: coinOwner1, value: serviceValue })
+            hid1 = await oc(tx1, "__init", "hid")
+
+            //console.log(Number(u.balance(coinOwner1)))
+
+
+            tx1 = await hs.shake(hid1, offchain, { from: cashOwner1})
+            shakeHid1 = await oc(tx1, "__shake", "hid")
+
+            tx1 = await hs.cancel(hid1, offchain, { from: coinOwner1 })
+
+            cancelHid1 = await oc(tx1, "__cancel", "hid")
+
+
+            let bla2= u.balance(coinOwner1)
+            //console.log(Number(bla2))
+            //console.log(Number(bla2)-Number(blb2))
+            console.log(serviceValue)
+            eq(20308000000000000, Number(blb2)-Number(bla2))//20308000000000000 gas fee
 
         })
 
