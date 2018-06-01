@@ -1476,6 +1476,7 @@ RegExpProto	node_modules/core-js/modules/es7.string.match-all.js	/^var RegExpPro
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^  function Renamer(binding, oldName, newName) {$/;"	c	class:Renamer
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^  }$/;"	c
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^var Renamer = function () {$/;"	f
+Reputation	contracts/Reputation.sol	/^        function Reputation() public {$/;"	f
 Reputation	contracts/Reputation.sol	/^contract Reputation {$/;"	c
 Reputation	migrations/8_reputation.js	/^var Reputation = artifacts.require('Reputation');$/;"	v
 RequestManager	node_modules/web3/lib/web3.js	/^var RequestManager = require('.\/web3\/requestmanager');$/;"	v
@@ -2866,7 +2867,6 @@ accessor	node_modules/private/private.js	/^  function accessor(object) {$/;"	f	f
 accessor.forget	node_modules/private/private.js	/^  }$/;"	f
 acirc	node_modules/babylon/lib/index.js	/^  aacute: "\\xE1",$/;"	p	class:XHTMLEntities
 acute	node_modules/babylon/lib/index.js	/^  sup3: "\\xB3",$/;"	p	class:XHTMLEntities
-add	contracts/Reputation.sol	/^        function add(address user, uint rating) public {$/;"	f
 add	node_modules/babel-generator/lib/node/index.js	/^  function add(type, func) {$/;"	f	function:expandAliases
 add	node_modules/babel-traverse/lib/path/family.js	/^  var add = function add(path) {$/;"	f	function:getCompletionRecords
 add	node_modules/lodash/_SetCache.js	/^SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;$/;"	m	class:SetCache
@@ -3036,6 +3036,7 @@ apply	node_modules/lodash/spread.js	/^var apply = require('.\/_apply'),$/;"	v
 apply	node_modules/lodash/unzipWith.js	/^var apply = require('.\/_apply'),$/;"	v
 applySourceMap	node_modules/source-map/lib/source-map-generator.js	/^SourceMapGenerator.prototype.applySourceMap =$/;"	m	class:SourceMapGenerator
 applyStyle	node_modules/chalk/index.js	/^function applyStyle() {$/;"	f
+approve	contracts/Reputation.sol	/^        function approve(address a) public onlyRoot returns (bool) {$/;"	f
 args	node_modules/json5/lib/cli.js	/^var args = process.argv;$/;"	v
 argsTag	node_modules/lodash/_baseClone.js	/^var argsTag = '[object Arguments]',$/;"	v
 argsTag	node_modules/lodash/_baseIsArguments.js	/^var argsTag = '[object Arguments]';$/;"	v
@@ -4870,6 +4871,7 @@ difference	node_modules/lodash/fp/_mapping.js	/^  'concat': true,$/;"	p	class:ex
 differenceBy	node_modules/lodash/differenceBy.js	/^var differenceBy = baseRest(function(array, values) {$/;"	v
 differenceWith	node_modules/lodash/differenceWith.js	/^var differenceWith = baseRest(function(array, values) {$/;"	v
 disable	node_modules/debug/src/debug.js	/^function disable() {$/;"	f
+disapprove	contracts/Reputation.sol	/^        function disapprove(address a) public onlyRoot returns (bool) {$/;"	f
 displayName	node_modules/web3/lib/web3/event.js	/^SolidityEvent.prototype.displayName = function () {$/;"	m	class:SolidityEvent
 displayName	node_modules/web3/lib/web3/function.js	/^SolidityFunction.prototype.displayName = function () {$/;"	m	class:SolidityFunction
 displayTransfer	node_modules/web3/example/icap.html	/^    function displayTransfer(text) {$/;"	f
@@ -7919,6 +7921,7 @@ rangeStep	node_modules/lodash/fp/_mapping.js	/^  'propertyOf': 'get',$/;"	p	clas
 rangeStepRight	node_modules/lodash/fp/_mapping.js	/^  'rangeStep': 'range',$/;"	p	class:exports.remap
 raquo	node_modules/babylon/lib/index.js	/^  ordm: "\\xBA",$/;"	p	class:XHTMLEntities
 rarr	node_modules/babylon/lib/index.js	/^  uarr: "\\u2191",$/;"	p	class:XHTMLEntities
+rate	contracts/Reputation.sol	/^        function rate(address a, uint _rating) onlyApproved public {$/;"	f
 raw	node_modules/babylon/lib/index.js	/^  elem.value = {$/;"	p	class:elem.value
 rceil	node_modules/babylon/lib/index.js	/^  lceil: "\\u2308",$/;"	p	class:XHTMLEntities
 rdquo	node_modules/babylon/lib/index.js	/^  ldquo: "\\u201C",$/;"	p	class:XHTMLEntities

@@ -28,41 +28,41 @@ contract("Reputation", (accounts) => {
         })
 
         describe('reputation', () => {
-                it('should have score = rating for the first rating', async () => {
+                it('should have rating = rating for the first rating', async () => {
                         const i = {
                                 user: user1,
                                 reviewer: user2,
                                 rating: 50
                         }
                         const o = {
-                                score: 50
+                                rating: 50
                         }
-                        const tx = await hs.add(i.user, i.rating, { from: i.reviewer})
-                        eq(o.score, await hs.score.call(i.user))
+                        const tx = await hs.rate(i.user, i.rating, { from: i.reviewer})
+                        eq(o.rating, await hs.rating.call(i.user))
                 })
-                it('should have score = average of the first two', async () => {
+                it('should have rating = average of the first two', async () => {
                         const i = {
                                 user: user1,
                                 reviewer: user2,
                                 rating: 40 
                         }
                         const o = {
-                                score: 45
+                                rating: 45
                         }
-                        const tx = await hs.add(i.user, i.rating, { from: i.reviewer})
-                        eq(o.score, await hs.score.call(i.user))
+                        const tx = await hs.rate(i.user, i.rating, { from: i.reviewer})
+                        eq(o.rating, await hs.rating.call(i.user))
                 })
-                it('should have score = average of the first three', async () => {
+                it('should have rating = average of the first three', async () => {
                         const i = {
                                 user: user1,
                                 reviewer: user2,
                                 rating: 40 
                         }
                         const o = {
-                                score: 43
+                                rating: 43
                         }
-                        const tx = await hs.add(i.user, i.rating, { from: i.reviewer})
-                        eq(o.score, await hs.score.call(i.user))
+                        const tx = await hs.rate(i.user, i.rating, { from: i.reviewer})
+                        eq(o.rating, await hs.rating.call(i.user))
                 })
         })
 
