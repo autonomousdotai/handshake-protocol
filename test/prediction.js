@@ -26,6 +26,7 @@ contract("PredictionHandshake", (accounts) => {
         const taker1 = accounts[6]
         const taker2 = accounts[7]
         const taker3 = accounts[8]
+        const reporter1 = accounts[9]
 
         const SUPPORT = 1, AGAINST = 2
         const OFFCHAIN = 1
@@ -40,7 +41,8 @@ contract("PredictionHandshake", (accounts) => {
 
                 it('should create the first prediction market', async () => {
                         const i = {
-                                fee: 1,
+                                fee: 2,
+                                reporter: reporter1,
                                 closingTime: 7,
                                 reportTime: 1,
                                 creator: creator1 
@@ -48,13 +50,14 @@ contract("PredictionHandshake", (accounts) => {
                         const o = {
                                 hid: 0
                         }
-                        const tx = await hs.createMarket(i.fee, i.closingTime, i.reportTime, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.fee, i.reporter, i.closingTime, i.reportTime, OFFCHAIN, { from: i.creator})
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
 
                 it('should create the second prediction market', async () => {
                         const i = {
-                                fee: 2,
+                                fee: 1,
+                                reporter: reporter1,
                                 closingTime: 3,
                                 reportTime: 2,
                                 creator: creator2 
@@ -62,7 +65,7 @@ contract("PredictionHandshake", (accounts) => {
                         const o = {
                                 hid: 1
                         }
-                        const tx = await hs.createMarket(i.fee, i.closingTime, i.reportTime, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.fee, i.reporter, i.closingTime, i.reportTime, OFFCHAIN, { from: i.creator})
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
 
@@ -83,8 +86,8 @@ contract("PredictionHandshake", (accounts) => {
                                 payout: i.payout
                         }
                         const tx = await hs.init(i.hid, i.side, i.payout, OFFCHAIN, {from: i.sender, value: i.stake})
-                        eq(o.stake, await oc(tx, "__debug__init", "stake"))
-                        eq(o.payout, await oc(tx, "__debug__init", "payout"))
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                        eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
                 it("should init/make 2nd order", async () => {
@@ -100,8 +103,8 @@ contract("PredictionHandshake", (accounts) => {
                                 payout: i.payout * 2
                         }
                         const tx = await hs.init(i.hid, i.side, i.payout, OFFCHAIN, {from: i.sender, value: i.stake})
-                        eq(o.stake, await oc(tx, "__debug__init", "stake"))
-                        eq(o.payout, await oc(tx, "__debug__init", "payout"))
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                        eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
                 it("should init/make 3rd order", async () => {
@@ -117,8 +120,8 @@ contract("PredictionHandshake", (accounts) => {
                                 payout: i.payout
                         }
                         const tx = await hs.init(i.hid, i.side, i.payout, OFFCHAIN, {from: i.sender, value: i.stake})
-                        eq(o.stake, await oc(tx, "__debug__init", "stake"))
-                        eq(o.payout, await oc(tx, "__debug__init", "payout"))
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                        eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
                 it("should uninit/cancel 3rd order", async () => {
@@ -134,8 +137,8 @@ contract("PredictionHandshake", (accounts) => {
                                 payout: 0
                         }
                         const tx = await hs.uninit(i.hid, i.side, i.stake, i.payout, OFFCHAIN, {from: i.sender})
-                        eq(o.stake, await oc(tx, "__debug__uninit", "stake"))
-                        eq(o.payout, await oc(tx, "__debug__uninit", "payout"))
+                        eq(o.stake, await oc(tx, "__test__uninit", "stake"))
+                        eq(o.payout, await oc(tx, "__test__uninit", "payout"))
                 })
         })
 
@@ -145,27 +148,29 @@ contract("PredictionHandshake", (accounts) => {
                         const i = {
                                 hid: 1,
                                 side: AGAINST, 
-                                stake: web3.toWei(0.1),
+                                stake: web3.toWei(0.2),
                                 payout: web3.toWei(0.3),
                                 maker: maker1,
                                 sender: taker1 
                         }
                         const o = {
-                                taker_stake: i.stake,
-                                taker_payout: i.payout,
-                                maker_stake: web3.toWei(0.2),
-                                maker_payout: i.payout
+                                match_taker_stake: i.stake,
+                                match_taker_payout: i.payout,
+                                match_maker_stake: web3.toWei(0.1),
+                                match_maker_payout: i.payout,
+                                open_maker_stake: web3.toWei(0.1),
+                                open_maker_payout: web3.toWei(0.3)
                         }
                         const tx = await hs.shake(i.hid, i.side, i.payout, i.maker, OFFCHAIN, {from: i.sender, value: i.stake})
 
-                        eq(o.taker_stake, await oc(tx, "__debug__shake__taker", "stake"))
-                        eq(o.taker_payout, await oc(tx, "__debug__shake__taker", "payout"))
+                        eq(o.match_taker_stake, await oc(tx, "__test__shake__taker", "stake"))
+                        eq(o.match_taker_payout, await oc(tx, "__test__shake__taker", "payout"))
 
-                        eq(o.maker_stake, await oc(tx, "__debug__shake__maker", "matched_stake"))
-                        eq(o.maker_payout, await oc(tx, "__debug__shake__maker", "matched_payout"))
+                        eq(o.match_maker_stake, await oc(tx, "__test__shake__maker", "matched_stake"))
+                        eq(o.match_maker_payout, await oc(tx, "__test__shake__maker", "matched_payout"))
 
-                        eq(0, await oc(tx, "__debug__shake__maker", "open_stake"))
-                        eq(o.maker_payout, await oc(tx, "__debug__shake__maker", "open_payout"))
+                        eq(o.open_maker_stake, await oc(tx, "__test__shake__maker", "open_stake"))
+                        eq(o.open_maker_payout, await oc(tx, "__test__shake__maker", "open_payout"))
                 })
 
 
@@ -198,6 +203,62 @@ contract("PredictionHandshake", (accounts) => {
                 })
                 */
         })
+
+        describe('collect payouts', () => {
+
+                it("should not be able to collect payout (no report yet)", async () => {
+                        const i = {
+                                hid: 1,
+                                trader: maker1
+                        }
+                        await u.assertRevert(hs.collect(i.hid, OFFCHAIN, {from: i.trader}))
+                })
+        })
+
+
+        describe('report outcome', () => {
+
+                it("should not be able to report outcome (not a reporter)", async () => {
+                        const i = {
+                                hid: 1,
+                                reporter: maker1
+                        }
+                        await u.assertRevert(hs.report(i.hid, SUPPORT, OFFCHAIN, {from: i.reporter}))
+                })
+
+                it("should report outcome", async () => {
+                        const i = {
+                                hid: 1,
+                                reporter: reporter1
+                        }
+
+                        u.increaseTime(60)
+
+                        hs.report(i.hid, SUPPORT, OFFCHAIN, {from: i.reporter})
+                })
+
+        })
+
+        describe('collect payouts', () => {
+
+                it("should collect payout (report is now available)", async () => {
+                        const i = {
+                                hid: 1,
+                                trader: maker1
+                        }
+                        const o = {
+                                networkComm: web3.toWei(.0006),
+                                marketComm: web3.toWei(.0024),
+                                payout: web3.toWei(.3 + .1 - .003) // .3 payout .1 stake
+                        }
+
+                        const tx = await hs.collect(i.hid, OFFCHAIN, {from: i.trader})
+                        eq(o.networkComm, await oc(tx, "__test__collect", "network"))
+                        eq(o.marketComm, await oc(tx, "__test__collect", "market"))
+                        eq(o.payout, await oc(tx, "__test__collect", "trader"))
+                })
+        })
+
 
 /*
 

@@ -8,11 +8,11 @@
 *
 *       side: 0 (unknown), 1 (support), 2 (against)
 *       role: 0 (unknown), 1 (maker), 2 (taker)
-*       __debug__* events will be removed prior to production deployment
+*       __test__* events will be removed prior to production deployment
 *
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 contract PredictionHandshake {
 
@@ -23,10 +23,11 @@ contract PredictionHandshake {
 
         struct Market {
                 address creator;
+                address reporter;
                 uint outcome;
                 uint fee;
-                uint reportTime;
                 uint closingTime; 
+                uint reportTime;
                 mapping(address => mapping(uint => Order)) open; // address => side => order
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
         }
@@ -35,24 +36,33 @@ contract PredictionHandshake {
         address public root;
         uint public NETWORK_FEE = 20; // 20%
 
-        function PredictionHandshake() public {
+        constructor() public {
                 root = msg.sender;
         } 
 
         event __createMarket(uint hid, bytes32 offchain); 
 
-        function createMarket(uint fee, uint closingTime, uint reportTime, bytes32 offchain) public payable {
+        function createMarket(
+                uint fee, 
+                address reporter, 
+                uint closingTime, 
+                uint reportTime, 
+                bytes32 offchain
+        ) 
+                public 
+        {
                 Market memory m;
                 m.creator = msg.sender;
+                m.reporter = reporter;
                 m.fee = fee;
                 m.closingTime = now + closingTime * 1 seconds;
                 m.reportTime = m.closingTime + reportTime * 1 seconds;
                 markets.push(m);
-                __createMarket(markets.length - 1, offchain);
+                emit __createMarket(markets.length - 1, offchain);
         }
 
         event __init(uint hid, bytes32 offchain);
-        event __debug__init(uint hid, uint stake, uint payout, bytes32 offchain);
+        event __test__init(uint hid, uint stake, uint payout, bytes32 offchain);
 
         // market maker
         function init(uint hid, uint side, uint payout, bytes32 offchain) public payable {
@@ -60,12 +70,12 @@ contract PredictionHandshake {
                 require(now < m.closingTime);
                 m.open[msg.sender][side].stake += msg.value;
                 m.open[msg.sender][side].payout += payout;
-                __init(hid, offchain);
-                __debug__init(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
+                emit __init(hid, offchain);
+                emit __test__init(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
         }
 
         event __uninit(uint hid, bytes32 offchain);
-        event __debug__uninit(uint hid, uint stake, uint payout, bytes32 offchain);
+        event __test__uninit(uint hid, uint stake, uint payout, bytes32 offchain);
 
         // market maker cancels order
         function uninit(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {
@@ -75,13 +85,13 @@ contract PredictionHandshake {
                 m.open[msg.sender][side].stake -= stake;
                 m.open[msg.sender][side].payout -= payout;
                 msg.sender.transfer(stake);
-                __uninit(hid, offchain);
-                __debug__uninit(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
+                emit __uninit(hid, offchain);
+                emit __test__uninit(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
         }
 
         event __shake(uint hid, bytes32 offchain);
-        event __debug__shake__taker(uint hid, uint stake, uint payout, bytes32 offchain);
-        event __debug__shake__maker(uint hid, uint matched_stake, uint matched_payout, 
+        event __test__shake__taker(uint hid, uint stake, uint payout, bytes32 offchain);
+        event __test__shake__maker(uint hid, uint matched_stake, uint matched_payout, 
                                            uint open_stake, uint open_payout, bytes32 offchain);
 
         // market taker
@@ -102,16 +112,16 @@ contract PredictionHandshake {
                 m.matched[msg.sender][side].stake += msg.value;
                 m.matched[msg.sender][side].payout += payout;
 
-                __shake(hid, offchain);
+                emit __shake(hid, offchain);
 
-                __debug__shake__taker(hid, m.matched[msg.sender][side].stake, 
+                emit __test__shake__taker(hid, m.matched[msg.sender][side].stake, 
                                              m.matched[msg.sender][side].payout, offchain);
-                __debug__shake__maker(hid, m.matched[maker][3-side].stake, m.matched[maker][3-side].payout, 
-                                             m.open[maker][3-side].stake, m.open[maker][3-side].payout, offchain);
+                emit __test__shake__maker(hid, m.matched[maker][3-side].stake, m.matched[maker][3-side].payout, m.open[maker][3-side].stake, m.open[maker][3-side].payout, offchain);
         }
 
 
         event __collect(uint hid, bytes32 offchain);
+        event __test__collect(uint network, uint market, uint trader);
 
         // collect payouts & outstanding stakes (if there is outcome)
         function collect(uint hid, bytes32 offchain) public onlyPredictor(hid) {
@@ -136,7 +146,8 @@ contract PredictionHandshake {
                 m.creator.transfer(marketComm - networkComm);
                 root.transfer(networkComm);
 
-                __collect(hid, offchain);
+                emit __collect(hid, offchain);
+                emit __test__collect(networkComm, marketComm - networkComm, amt - marketComm);
         }
 
 
@@ -163,15 +174,18 @@ contract PredictionHandshake {
 
                 msg.sender.transfer(amt);
 
-                __refund(hid, offchain);
+                emit __refund(hid, offchain);
         }
 
         event __report(uint hid, bytes32 offchain);
 
         // report outcome
-        function report(uint hid, uint outcome, bytes32 offchain) public onlyRoot() {
-                markets[hid].outcome = outcome;
-                __report(hid, offchain);
+        function report(uint hid, uint outcome, bytes32 offchain) public {
+                Market storage m = markets[hid]; 
+                require(msg.sender == m.reporter);
+                require(now > m.closingTime);
+                m.outcome = outcome;
+                emit __report(hid, offchain);
         }
 
         modifier onlyPredictor(uint hid) {
@@ -179,11 +193,6 @@ contract PredictionHandshake {
                         markets[hid].matched[msg.sender][2].stake > 0 || 
                         markets[hid].open[msg.sender][1].stake > 0 || 
                         markets[hid].open[msg.sender][2].stake > 0);
-                _;
-        }
-
-        modifier onlyRoot() {
-                require(msg.sender == root);
                 _;
         }
 }
