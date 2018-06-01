@@ -19,7 +19,7 @@ contract("Reputation", (accounts) => {
 
         const root = accounts[0]
         const user1 = accounts[1]
-        const user2 = accounts[2]
+        const reviewer1 = accounts[2]
 
         let hs;
 
@@ -27,11 +27,24 @@ contract("Reputation", (accounts) => {
                 hs = await p2p.deployed();
         })
 
+        describe('add reviewer to approved list', () => {
+                it('should add reviewer to approved list', async () => {
+                        const i = {
+                                reviewer: reviewer1,
+                        }
+                        const o = {
+                                approved: true,
+                        }
+                        const tx = await hs.approve(i.reviewer, { from: root})
+                        eq(o.approved, await hs.approved.call(i.reviewer))
+                })
+        })
+
         describe('reputation', () => {
                 it('should have rating = rating for the first rating', async () => {
                         const i = {
                                 user: user1,
-                                reviewer: user2,
+                                reviewer: reviewer1,
                                 rating: 50
                         }
                         const o = {
@@ -43,7 +56,7 @@ contract("Reputation", (accounts) => {
                 it('should have rating = average of the first two', async () => {
                         const i = {
                                 user: user1,
-                                reviewer: user2,
+                                reviewer: reviewer1,
                                 rating: 40 
                         }
                         const o = {
@@ -55,7 +68,7 @@ contract("Reputation", (accounts) => {
                 it('should have rating = average of the first three', async () => {
                         const i = {
                                 user: user1,
-                                reviewer: user2,
+                                reviewer: reviewer1,
                                 rating: 40 
                         }
                         const o = {
