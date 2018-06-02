@@ -1,12 +1,12 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 contract ExchangeHandshake {
 
     address owner;
 
-    function ExchangeHandshake() public {
-    	owner = msg.sender;
-	}
+     constructor() public {
+        owner = msg.sender;
+    }
     uint fee = 5;
     uint feeRefund = 5;
 
@@ -73,7 +73,7 @@ contract ExchangeHandshake {
     {
         fee = f;
         feeRefund = fr;
-        __setFee(fee, feeRefund);
+        emit __setFee(fee, feeRefund);
     }
 
 
@@ -101,7 +101,7 @@ contract ExchangeHandshake {
         p.feeRefund = feeRefund;
         p.state = S.Inited;
         ex.push(p);
-        __initByCashOwner(ex.length - 1, msg.sender, offchain);
+        emit __initByCashOwner(ex.length - 1, msg.sender, offchain);
     }
 
     /**
@@ -126,7 +126,7 @@ contract ExchangeHandshake {
         p.feeRefund = feeRefund;
         p.state = S.Inited;
         ex.push(p);
-        __initByCoinOwner(ex.length - 1, msg.sender, offchain);
+        emit __initByCoinOwner(ex.length - 1, msg.sender, offchain);
     }
 
     //CashOwner close the transaction after init
@@ -134,7 +134,7 @@ contract ExchangeHandshake {
         atState(S.Inited, hid)
     {
         ex[hid].state = S.Cancelled;
-        __closeByCashOwner(hid, offchain);
+        emit __closeByCashOwner(hid, offchain);
     }
 
     //shaker agree and make a handshake
@@ -146,7 +146,7 @@ contract ExchangeHandshake {
         if (ex[hid].cashOwner == 0x0) ex[hid].cashOwner = msg.sender;
 
         require(msg.sender == ex[hid].coinOwner || msg.sender == ex[hid].cashOwner);
-        __shake(hid, offchain);
+        emit __shake(hid, offchain);
         ex[hid].state = S.Shaked;
     }
 
@@ -156,7 +156,7 @@ contract ExchangeHandshake {
     {
         Exchange storage p = ex[hid];
         p.state = S.Accepted;
-        __accept(hid, offchain);
+        emit __accept(hid, offchain);
     }
 
     //CashOwner withdraw funds from a handshake
@@ -171,7 +171,7 @@ contract ExchangeHandshake {
         p.adrFeeRefund.transfer(fr);
         msg.sender.transfer(p.value - f - fr);
 
-        __withdraw(hid, offchain);
+        emit __withdraw(hid, offchain);
     }
 
     //CashOwner reject the transaction
@@ -179,7 +179,7 @@ contract ExchangeHandshake {
         atState(S.Shaked, hid)
     {
         ex[hid].state = S.Rejected;
-        __reject(hid, offchain);
+        emit __reject(hid, offchain);
     }
 
     //coinOwner cancel the handshake
@@ -190,7 +190,7 @@ contract ExchangeHandshake {
         p.state = S.Cancelled;
         msg.sender.transfer(p.value);
 
-        __cancel(hid, offchain);
+        emit __cancel(hid, offchain);
     }
 
     //get handshake stage by hid
