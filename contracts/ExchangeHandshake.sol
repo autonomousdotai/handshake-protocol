@@ -33,7 +33,6 @@ contract ExchangeHandshake {
     event __reject(uint hid, bytes32 offchain);
     event __accept(uint hid, bytes32 offchain);
     event __cancel(uint hid, bytes32 offchain);
-    event __closeByCoinOwner(uint hid, bytes32 offchain);
     event __closeByCashOwner(uint hid, bytes32 offchain);
 
     //success if sender is coinOwner
