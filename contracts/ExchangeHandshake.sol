@@ -7,8 +7,8 @@ contract ExchangeHandshake {
     function ExchangeHandshake() public {
     	owner = msg.sender;
 	}
-    uint fee;
-    uint feeRefund;
+    uint fee = 5;
+    uint feeRefund = 5;
 
     enum S { Inited, Shaked, Accepted, Rejected, Done, Cancelled }
 
@@ -26,12 +26,15 @@ contract ExchangeHandshake {
     Exchange[] public ex;
 
     event __setFee(uint fee, uint feeRefund);
-    event __init(uint hid, address initiator, bytes32 offchain);
+    event __initByCoinOwner(uint hid, address coinOwner, bytes32 offchain);
+    event __initByCashOwner(uint hid, address cashOwner, bytes32 offchain);
     event __shake(uint hid, bytes32 offchain);
     event __withdraw(uint hid, bytes32 offchain);
     event __reject(uint hid, bytes32 offchain);
     event __accept(uint hid, bytes32 offchain);
     event __cancel(uint hid, bytes32 offchain);
+    event __closeByCoinOwner(uint hid, bytes32 offchain);
+    event __closeByCashOwner(uint hid, bytes32 offchain);
 
     //success if sender is coinOwner
     modifier onlyCoinOwner(uint hid) {
@@ -81,7 +84,7 @@ contract ExchangeHandshake {
     * @param value funds required for this handshake
     * @param offchain record ID in offchain backend database
     */
-    function init(
+    function initByCashOwner(
         address exchanger,
         address adrFeeRefund,
         uint value,
@@ -98,7 +101,7 @@ contract ExchangeHandshake {
         p.feeRefund = feeRefund;
         p.state = S.Inited;
         ex.push(p);
-        __init(ex.length - 1, msg.sender, offchain);
+        __initByCashOwner(ex.length - 1, msg.sender, offchain);
     }
 
     /**
@@ -123,7 +126,15 @@ contract ExchangeHandshake {
         p.feeRefund = feeRefund;
         p.state = S.Inited;
         ex.push(p);
-        __init(ex.length - 1, msg.sender, offchain);
+        __initByCoinOwner(ex.length - 1, msg.sender, offchain);
+    }
+
+    //CashOwner close the transaction after init
+    function closeByCashOwner(uint hid, bytes32 offchain) public onlyCashOwner(hid)
+        atState(S.Inited, hid)
+    {
+        ex[hid].state = S.Cancelled;
+        __closeByCashOwner(hid, offchain);
     }
 
     //shaker agree and make a handshake
@@ -175,7 +186,7 @@ contract ExchangeHandshake {
     function cancel(uint hid, bytes32 offchain) public onlyCoinOwner(hid) {
         Exchange storage p = ex[hid];
         require(p.state == S.Rejected
-                || p.state == S.Shaked);
+                || p.state == S.Shaked || p.state == S.Inited);
         p.state = S.Cancelled;
         msg.sender.transfer(p.value);
 
