@@ -71,7 +71,7 @@ contract PayableHandshake {
         p.value = value;
         p.deadline = now + deadline * 1 seconds;
         pm.push(p);
-        __init(pm.length - 1, msg.sender, payer, offchain);
+        emit __init(pm.length - 1, msg.sender, payer, offchain);
     }
 
     /**
@@ -95,8 +95,8 @@ contract PayableHandshake {
         p.state = S.Shaked;
         p.deadline = now + deadline * 1 seconds;
         pm.push(p);
-        __init(pm.length - 1, payee, msg.sender, offchain);
-        __shake(pm.length - 1, offchain);
+        emit __init(pm.length - 1, payee, msg.sender, offchain);
+        emit __shake(pm.length - 1, offchain);
     }
 
     //Payer agree and make a handshake
@@ -104,7 +104,7 @@ contract PayableHandshake {
         require(pm[hid].state == S.Inited && msg.value >= pm[hid].value);
         if (pm[hid].payer == 0x0) pm[hid].payer = msg.sender;
         require(msg.sender == pm[hid].payer);
-        __shake(hid, offchain);
+        emit __shake(hid, offchain);
         pm[hid].state = S.Shaked;
     }
 
@@ -113,7 +113,7 @@ contract PayableHandshake {
         Payable storage p = pm[hid];
         require(p.state == S.Shaked && now < p.deadline);
         p.state = S.Accepted;
-        __deliver(hid, offchain);
+        emit __deliver(hid, offchain);
     }
 
     //Payee withdraw funds from a handshake
@@ -123,21 +123,21 @@ contract PayableHandshake {
         p.state = S.Done;
 
         msg.sender.transfer(p.value);
-        __withdraw(hid, offchain);
+        emit __withdraw(hid, offchain);
     }
 
     //Payer reject the deliver
     function reject(uint hid, bytes32 offchain) public onlyPayer(hid) {
         require(pm[hid].state == S.Accepted);
         pm[hid].state = S.Rejected;
-        __reject(hid, offchain);
+        emit __reject(hid, offchain);
     }
 
     //Payer accept the deliver
     function accept(uint hid, bytes32 offchain) public onlyPayer(hid) {
         require(pm[hid].state == S.Rejected);
         pm[hid].state = S.Accepted;
-        __accept(hid, offchain);
+        emit __accept(hid, offchain);
     }
 
     //Payer cancel the handshake
@@ -148,6 +148,6 @@ contract PayableHandshake {
 
         p.state = S.Cancelled;
         msg.sender.transfer(p.value);
-        __cancel(hid, offchain);
+        emit __cancel(hid, offchain);
     }
 }

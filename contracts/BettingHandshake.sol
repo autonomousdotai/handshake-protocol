@@ -27,7 +27,7 @@ contract BettingHandshake {
     uint public reviewWindow = 3 days;
     uint public rejectWindow = 1 days;
 
-    function BettingHandshake() public {
+    constructor() public {
         referee = msg.sender;
     } 
 
@@ -73,7 +73,7 @@ contract BettingHandshake {
         b.acceptors = acceptors;
         
         bets.push(b);
-        __init(bets.length - 1, S.Inited, b.balance, b.escrow, offchain);
+        emit __init(bets.length - 1, S.Inited, b.balance, b.escrow, offchain);
     }
 
     event __shake(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
@@ -97,7 +97,7 @@ contract BettingHandshake {
         require(b.balance <= b.goal);
         
         b.state = S.Shaked;
-        __shake(hid, b.state, b.balance, b.escrow, offchain);
+        emit __shake(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __cancelBet(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
@@ -108,7 +108,7 @@ contract BettingHandshake {
         require(now >= b.deadline + reviewWindow && b.state == S.Shaked);
 
         b.state = S.Cancelled;
-        __cancelBet(hid, b.state, b.balance, b.escrow, offchain);
+        emit __cancelBet(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __closeBet(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
@@ -129,7 +129,7 @@ contract BettingHandshake {
             msg.sender.transfer(remainingMoney);
         }
         
-        __closeBet(hid, b.state, b.balance, b.escrow, offchain);
+        emit __closeBet(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __initiatorWon(uint hid, S state, uint balance, uint escrow, bytes32 offchain); 
@@ -139,7 +139,7 @@ contract BettingHandshake {
         require(b.state == S.Shaked && now > b.deadline * 1 seconds); 
         b.state = S.InitiatorWon; 
 
-        __initiatorWon(hid, b.state, b.balance, b.escrow, offchain);
+        emit __initiatorWon(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __betorWon(uint hid, S state, uint balance, uint escrow, bytes32 offchain); 
@@ -149,7 +149,7 @@ contract BettingHandshake {
         require(b.state == S.Shaked && now > b.deadline * 1 seconds);
         b.state = S.BetorWon;
 
-        __betorWon(hid, b.state, b.balance, b.escrow, offchain);
+        emit __betorWon(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __draw(uint hid, S state, uint balance, uint escrow, bytes32 offchain); 
@@ -159,7 +159,7 @@ contract BettingHandshake {
         require(b.state == S.Shaked && now > b.deadline * 1 seconds); 
         b.state = S.Draw;
 
-        __draw(hid, b.state, b.balance, b.escrow, offchain);
+        emit __draw(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __withdraw(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
@@ -218,7 +218,7 @@ contract BettingHandshake {
             b.state = S.Done;   
         }
 
-        __withdraw(hid, b.state, b.balance, b.escrow, offchain);
+        emit __withdraw(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __reject(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
@@ -228,7 +228,7 @@ contract BettingHandshake {
         require(b.state == S.InitiatorWon || b.state == S.Draw || b.state == S.BetorWon); 
 
         b.state = S.Rejected;
-        __reject(hid, b.state, b.balance, b.escrow, offchain);
+        emit __reject(hid, b.state, b.balance, b.escrow, offchain);
     }
 
     event __setWinner(uint hid, S state, uint balance, uint escrow, bytes32 offchain);
@@ -239,7 +239,7 @@ contract BettingHandshake {
         require(b.state == S.Rejected && (result == uint8(S.InitiatorWon) || result == uint8(S.Draw) || result == uint8(S.BetorWon)));
         b.state = S.Accepted;
         b.result = result; 
-        __setWinner(hid, b.state, b.balance, b.escrow, offchain);
+        emit __setWinner(hid, b.state, b.balance, b.escrow, offchain);
     }
     
     function isValidAcceptor(uint hid, address acceptor) private view returns (bool value) {
