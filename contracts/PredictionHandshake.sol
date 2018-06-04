@@ -8,7 +8,7 @@
 *
 *       side: 0 (unknown), 1 (support), 2 (against)
 *       role: 0 (unknown), 1 (maker), 2 (taker)
-*       state: 0 (unknown), 1 (created), 2 (approved), 3 (reported), 4 (disputed)
+*       state: 0 (unknown), 1 (created), 2 (reported), 3 (disputed)
 *       __test__* events will be removed prior to production deployment
 *
 */
@@ -27,9 +27,7 @@ contract PredictionHandshake {
                 uint closingTime; 
                 uint winningFee; 
                 uint reportTime; 
-                uint reportFee;
                 bytes32 source;
-                address reporter;
                 uint disputeTime;
 
                 uint state;
@@ -45,20 +43,19 @@ contract PredictionHandshake {
         Market[] public markets;
         address public root;
         uint public NETWORK_FEE = 20; // 20%
+        uint public DISPUTE_THRESHOLD = 5; // 5%
 
         constructor() public {
                 root = msg.sender;
         } 
 
-        event __initMarket(uint hid, bytes32 offchain); 
+        event __createMarket(uint hid, bytes32 offchain); 
 
-        function initMarket(
+        function createMarket(
                 uint closingWindow, 
                 uint winningFee, 
                 uint reportWindow, 
-                uint reportFee,
                 bytes32 source,
-                address reporter, 
                 uint disputeWindow,
                 bytes32 offchain
         ) 
@@ -69,28 +66,14 @@ contract PredictionHandshake {
                 m.closingTime = now + closingWindow * 1 seconds;
                 m.winningFee = winningFee;
                 m.reportTime = m.closingTime + reportWindow * 1 seconds;
-                m.reportFee = reportFee;
                 m.source = source;
-                m.reporter = reporter;
                 m.disputeTime = m.reportTime + disputeWindow * 1 seconds;
                 m.state = 1;
                 markets.push(m);
 
-                emit __initMarket(markets.length - 1, offchain);
+                emit __createMarket(markets.length - 1, offchain);
         }
 
-
-        event __shakeMarket(uint hid, bytes32 offchain); 
-
-        function shakeMarket(uint hid, bytes32 offchain) public {
-                Market storage m = markets[hid];
-
-                require(msg.sender == m.reporter);
-
-                m.state = 2;
-
-                emit __shakeMarket(hid, offchain);
-        }
 
         event __initOrder(uint hid, bytes32 offchain);
         event __test__initOrder(uint hid, uint stake, uint payout, bytes32 offchain);
@@ -100,7 +83,7 @@ contract PredictionHandshake {
                 Market storage m = markets[hid];
 
                 require(now < m.closingTime);
-                require(m.state == 2);
+                require(m.state == 1);
 
                 m.open[msg.sender][side].stake += msg.value;
                 m.open[msg.sender][side].payout += payout;
@@ -116,7 +99,7 @@ contract PredictionHandshake {
         function uninitOrder(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid];
 
-                require(m.state == 2);
+                require(m.state == 1);
                 require(m.open[msg.sender][side].stake >= stake);
                 require(m.open[msg.sender][side].payout >= payout);
 
@@ -148,7 +131,7 @@ contract PredictionHandshake {
                 Market storage m = markets[hid];
 
                 require(maker != 0);
-                require(m.state == 2);
+                require(m.state == 1);
                 require(now < m.closingTime);
 
                 // remove maker's order from open (could be partial)
@@ -180,7 +163,7 @@ contract PredictionHandshake {
         function collect(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
 
-                require(m.state == 3);
+                require(m.state == 2);
                 require(now > m.disputeTime);
 
                 // calc network commission, market commission and winnings
@@ -213,7 +196,7 @@ contract PredictionHandshake {
         function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
 
-                require(m.state == 2);
+                require(m.state == 1);
                 require(now > m.reportTime);
 
                 // calc refund amt
@@ -242,10 +225,10 @@ contract PredictionHandshake {
         // report outcome
         function report(uint hid, uint outcome, bytes32 offchain) public {
                 Market storage m = markets[hid]; 
-                require(m.state == 2);
-                require(msg.sender == m.reporter);
+                require(msg.sender == m.creator);
+                require(m.state == 1);
                 m.outcome = outcome;
-                m.state = 3;
+                m.state = 2;
                 emit __report(hid, offchain);
         }
 
@@ -255,13 +238,13 @@ contract PredictionHandshake {
         // dispute outcome
         function dispute(uint hid, bytes32 offchain) public {
                 Market storage m = markets[hid]; 
-                require(m.state == 3);
+                require(m.state == 2);
                 require(!m.resolved);
                 m.disputeStakes += m.matched[msg.sender][m.outcome].stake;
 
                 // if dispute stakes > 5% of the total stakes
-                if (100 * m.disputeStakes > 5 * m.totalStakes) {
-                        m.state = 4;
+                if (100 * m.disputeStakes > DISPUTE_THRESHOLD * m.totalStakes) {
+                        m.state = 3;
                 }
                 emit __dispute(hid, offchain);
         }
@@ -272,10 +255,10 @@ contract PredictionHandshake {
         function resolve(uint hid, uint outcome, bytes32 offchain) public {
                 require(msg.sender == root);
                 Market storage m = markets[hid]; 
-                require(m.state == 4);
+                require(m.state == 3);
                 m.resolved = true;
                 m.outcome = outcome;
-                m.state = outcome == 0? 2: 3;
+                m.state = outcome == 0? 1: 2;
                 emit __resolve(hid, offchain);
         }
 

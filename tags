@@ -1874,6 +1874,7 @@ __cancelBet	contracts/BettingHandshake.sol	/^    event __cancelBet(uint hid, S s
 __clone	node_modules/babylon/lib/index.js	/^  Node.prototype.__clone = function __clone() {$/;"	m	class:Node
 __closeBet	contracts/BettingHandshake.sol	/^    event __closeBet(uint hid, S state, uint balance, uint escrow, bytes32 offchain);$/;"	e
 __collect	contracts/PredictionHandshake.sol	/^        event __collect(uint hid, bytes32 offchain);$/;"	e
+__createMarket	contracts/PredictionHandshake.sol	/^        event __createMarket(uint hid, bytes32 offchain); $/;"	e
 __deliver	contracts/PayableHandshake.sol	/^    event __deliver(uint hid, bytes32 offchain);$/;"	e
 __dispute	contracts/PredictionHandshake.sol	/^        event __dispute(uint hid, bytes32 offchain);$/;"	e
 __draw	contracts/BettingHandshake.sol	/^    event __draw(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
@@ -1883,7 +1884,6 @@ __init	contracts/CrowdsaleHandshake.sol	/^    event __init(uint hid, S state, by
 __init	contracts/ExchangeHandshake.sol	/^    event __init(uint hid, address initiator, bytes32 offchain);$/;"	e
 __init	contracts/GroupHandshake.sol	/^    event __init(uint hid, bytes32 offchain);$/;"	e
 __init	contracts/PayableHandshake.sol	/^    event __init(uint hid, address payee, address payer, bytes32 offchain);$/;"	e
-__initMarket	contracts/PredictionHandshake.sol	/^        event __initMarket(uint hid, bytes32 offchain); $/;"	e
 __initOrder	contracts/PredictionHandshake.sol	/^        event __initOrder(uint hid, bytes32 offchain);$/;"	e
 __initiatorWon	contracts/BettingHandshake.sol	/^    event __initiatorWon(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
 __refund	contracts/CrowdsaleHandshake.sol	/^    event __refund(uint hid, S state, bytes32 offchain);$/;"	e
@@ -1901,7 +1901,6 @@ __shake	contracts/CrowdsaleHandshake.sol	/^    event __shake(uint hid, S state, 
 __shake	contracts/ExchangeHandshake.sol	/^    event __shake(uint hid, bytes32 offchain);$/;"	e
 __shake	contracts/GroupHandshake.sol	/^    event __shake(uint hid, S state, bytes32 offchain);$/;"	e
 __shake	contracts/PayableHandshake.sol	/^    event __shake(uint hid, bytes32 offchain);$/;"	e
-__shakeMarket	contracts/PredictionHandshake.sol	/^        event __shakeMarket(uint hid, bytes32 offchain); $/;"	e
 __shakeOrder	contracts/PredictionHandshake.sol	/^        event __shakeOrder(uint hid, bytes32 offchain);$/;"	e
 __stop	contracts/CrowdsaleHandshake.sol	/^    event __stop(uint hid, S state, bytes32 offchain);$/;"	e
 __test__collect	contracts/PredictionHandshake.sol	/^        event __test__collect(uint network, uint market, uint trader);$/;"	e
@@ -4473,6 +4472,7 @@ createHybrid	node_modules/lodash/_createHybrid.js	/^function createHybrid(func, 
 createHybrid	node_modules/lodash/lodash.js	/^    function createHybrid(func, bitmask, thisArg, partials, holders, partialsRight, holdersRight, argPos, ary, arity) {$/;"	f
 createInverter	node_modules/lodash/_createInverter.js	/^function createInverter(setter, toIteratee) {$/;"	f
 createInverter	node_modules/lodash/lodash.js	/^    function createInverter(setter, toIteratee) {$/;"	f
+createMarket	contracts/PredictionHandshake.sol	/^        function createMarket($/;"	f
 createMathOperation	node_modules/lodash/_createMathOperation.js	/^function createMathOperation(operator, defaultValue) {$/;"	f
 createMathOperation	node_modules/lodash/add.js	/^var createMathOperation = require('.\/_createMathOperation');$/;"	v
 createMathOperation	node_modules/lodash/divide.js	/^var createMathOperation = require('.\/_createMathOperation');$/;"	v
@@ -6099,7 +6099,6 @@ initCloneByTag	node_modules/lodash/lodash.js	/^    function initCloneByTag(objec
 initCloneObject	node_modules/lodash/_initCloneObject.js	/^function initCloneObject(object) {$/;"	f
 initCloneObject	node_modules/lodash/lodash.js	/^    function initCloneObject(object) {$/;"	f
 initCrowdsale	contracts/CrowdsaleHandshake.sol	/^    function initCrowdsale(uint goal, uint saletime, uint deadline, bytes32 offchain) public {$/;"	f
-initMarket	contracts/PredictionHandshake.sol	/^        function initMarket($/;"	f
 initOptions	node_modules/babel-core/lib/transformation/file/index.js	/^  File.prototype.initOptions = function initOptions(opts) {$/;"	m	class:File
 initOrder	contracts/PredictionHandshake.sol	/^        function initOrder(uint hid, uint side, uint payout, bytes32 offchain) public payable {$/;"	f
 initial	node_modules/lodash/initial.js	/^function initial(array) {$/;"	f
@@ -8355,7 +8354,6 @@ shake	contracts/CrowdsaleHandshake.sol	/^    function shake(uint hid, bytes32 of
 shake	contracts/ExchangeHandshake.sol	/^    function shake(uint hid, bytes32 offchain) public payable$/;"	f
 shake	contracts/GroupHandshake.sol	/^    function shake(uint hid, bytes32 acceptor, bytes32 offchain) public {$/;"	f
 shake	contracts/PayableHandshake.sol	/^    function shake(uint hid, bytes32 offchain) public payable {$/;"	f
-shakeMarket	contracts/PredictionHandshake.sol	/^        function shakeMarket(uint hid, bytes32 offchain) public {$/;"	f
 shakeOrder	contracts/PredictionHandshake.sol	/^        function shakeOrder($/;"	f
 shallowEqual	node_modules/babel-types/lib/index.js	/^function shallowEqual(actual, expected) {$/;"	f
 shannon	node_modules/web3/lib/utils/utils.js	/^    'Gwei':         '1000000000',$/;"	p	class:unitMap
