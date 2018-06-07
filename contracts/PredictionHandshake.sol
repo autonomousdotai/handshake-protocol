@@ -115,15 +115,15 @@ contract PredictionHandshake {
                 // check if the odds matching is valid
                 require(makerOdds >= takerOdds * (makerOdds -1));
 
+                // check if the stake is sufficient
+                require(m.open[maker][3-side].stake >= makerStake);
+                require(m.open[maker][3-side].odds[makerOdds] >= makerStake);
+                require(m.open[maker][3-side].payout >= makerPayout);
+
                 // remove maker's order from open (could be partial)
                 m.open[maker][3-side].stake -= makerStake;
                 m.open[maker][3-side].odds[makerOdds] -= makerStake;
                 m.open[maker][3-side].payout -= makerPayout;
-
-                // check if the stake is sufficient
-                require(m.open[maker][3-side].stake >= 0);
-                require(m.open[maker][3-side].odds[makerOdds] >= 0);
-                require(m.open[maker][3-side].payout >= 0);
 
                 // add taker's order maker's order to matched
                 m.matched[maker][3-side].stake += makerStake;
