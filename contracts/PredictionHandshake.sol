@@ -73,7 +73,7 @@ contract PredictionHandshake {
                 require(now < m.closingTime);
                 m.open[msg.sender][side].stake += msg.value;
                 m.open[msg.sender][side].odds[odds] += msg.value;
-                m.open[msg.sender][side].payout += ((odds * msg.value) / 100);
+                m.open[msg.sender][side].payout += ((odds * msg.value) / ODDS_ROUND_UP);
                 emit __init(hid, offchain);
                 emit __test__init(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
         }
@@ -88,7 +88,7 @@ contract PredictionHandshake {
                 require(m.open[msg.sender][side].odds[odds] >= stake);
                 m.open[msg.sender][side].stake -= stake;
                 m.open[msg.sender][side].odds[odds] -= stake;
-                m.open[msg.sender][side].payout -= ((odds * stake) / 100);
+                m.open[msg.sender][side].payout -= ((odds * stake) / ODDS_ROUND_UP);
                 msg.sender.transfer(stake);
                 emit __uninit(hid, offchain);
                 emit __test__uninit(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
@@ -107,10 +107,10 @@ contract PredictionHandshake {
 
                 address taker = msg.sender;
                 uint takerStake = msg.value;
-                uint takerPayout = (takerStake * takerOdds) / 100;
+                uint takerPayout = (takerStake * takerOdds) / ODDS_ROUND_UP;
 
                 uint makerStake = msg.value * takerOdds - takerStake;
-                uint makerPayout = (makerStake * makerOdds) / 100;
+                uint makerPayout = (makerStake * makerOdds) / ODDS_ROUND_UP;
 
                 // check if the odds matching is valid
                 require(makerOdds >= takerOdds * (makerOdds -1));
