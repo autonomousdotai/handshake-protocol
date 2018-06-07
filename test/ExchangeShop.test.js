@@ -40,7 +40,7 @@ contract("ExchangeHandshake", (accounts) => {
     let offchain = 1
     let offchain2 = 11
 
-    describe('at beginning time', () => {
+    describe('at shop owner create the offer', () => {
         it('should transfer coin successful', async () => {
 
             tx1 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner1, value: serviceValue })
@@ -134,6 +134,41 @@ contract("ExchangeHandshake", (accounts) => {
 
         })
 
+    })
+
+    describe('at customer create the offer', () => {
+        it('should init & shake successful', async () => {
+
+            tx1 = await hs.initByCustomer(shopOwner1, serviceValue, offchain, { from: customer1, value: serviceValue })
+            hid1 = await oc(tx1, "__initByCustomer", "hid")
+
+            tx1 = await hs.shake(hid1, offchain, { from: shopOwner1})
+            let shakeHid1 = await oc(tx1, "__shake", "hid")
+
+            eq(Number(hid1), Number(shakeHid1))
+
+        })
+
+        it('should transfer coin successful', async () => {
+
+            tx1 = await hs.initByCustomer(shopOwner1, serviceValue, offchain, { from: customer1, value: serviceValue })
+            hid1 = await oc(tx1, "__initByCustomer", "hid")
+
+            tx1 = await hs.shake(hid1, offchain, { from: shopOwner1})
+            shakeHid1 = await oc(tx1, "__shake", "hid")
+            eq(Number(hid1), Number(shakeHid1))
+
+            let blb1= u.balance(shopOwner1)
+
+            tx1 = await hs.finish(hid1, offchain, { from: customer1})
+            finishHid1 = await oc(tx1, "__accept", "hid")
+            eq(Number(hid1), Number(finishHid1))
+
+            let bla1= u.balance(shopOwner1)
+            eq(Number(blb1)+ Number(serviceValue), Number(bla1))
+
+
+        })
     })
 
 })
