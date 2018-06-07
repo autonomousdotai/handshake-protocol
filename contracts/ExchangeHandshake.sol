@@ -28,8 +28,8 @@ contract ExchangeHandshake {
     event __setFee(uint fee, uint feeRefund);
     event __initByCoinOwner(uint hid, address coinOwner, bytes32 offchain);
     event __initByCashOwner(uint hid, address cashOwner, bytes32 offchain);
-    event __shake(uint hid, bytes32 offchain);
-    event __withdraw(uint hid, bytes32 offchain);
+    event __shake(uint hid,uint amount, bytes32 offchain);
+    event __withdraw(uint hid, uint value, bytes32 offchain);
     event __reject(uint hid, bytes32 offchain);
     event __accept(uint hid, bytes32 offchain);
     event __cancel(uint hid, bytes32 offchain);
@@ -145,8 +145,10 @@ contract ExchangeHandshake {
         if (ex[hid].cashOwner == 0x0) ex[hid].cashOwner = msg.sender;
 
         require(msg.sender == ex[hid].coinOwner || msg.sender == ex[hid].cashOwner);
-        emit __shake(hid, offchain);
         ex[hid].state = S.Shaked;
+
+        emit __shake(hid, msg.value, offchain);
+
     }
 
     //CoinOwner accept transaction
@@ -162,15 +164,15 @@ contract ExchangeHandshake {
     function withdraw(uint hid, bytes32 offchain) public onlyCashOwner(hid)
         atState(S.Accepted, hid)
     {
-        Exchange storage p = ex[hid];
-        p.state = S.Done;
-        uint f = (p.value * p.fee) / 1000;
-        uint fr = (p.value * p.feeRefund) / 1000;
-        p.exchanger.transfer(f);
-        p.adrFeeRefund.transfer(fr);
-        msg.sender.transfer(p.value - f - fr);
+       Exchange storage p = ex[hid];
+       p.state = S.Done;
+       uint f = (p.value * p.fee) / 1000;
+       uint fr = (p.value * p.feeRefund) / 1000;
+       p.exchanger.transfer(f);
+       p.adrFeeRefund.transfer(fr);
+       msg.sender.transfer(p.value - f - fr);
 
-        emit __withdraw(hid, offchain);
+       emit __withdraw(hid,p.value, offchain);
     }
 
     //CashOwner reject the transaction
