@@ -6082,7 +6082,7 @@ init	contracts/BasicHandshake.sol	/^    function init(address acceptor, bytes32 
 init	contracts/ExchangeHandshake.sol	/^    function init($/;"	f
 init	contracts/GroupHandshake.sol	/^    function init(bytes32[] acceptors, bytes32 offchain) public {$/;"	f
 init	contracts/PayableHandshake.sol	/^    function init($/;"	f
-init	contracts/PredictionHandshake.sol	/^        function init(uint hid, uint side, uint payout, bytes32 offchain) public payable {$/;"	f
+init	contracts/PredictionHandshake.sol	/^        function init(uint hid, uint side, uint odds, bytes32 offchain) public payable {$/;"	f
 init	node_modules/babel-core/lib/transformation/file/options/option-manager.js	/^  OptionManager.prototype.init = function init() {$/;"	m	class:OptionManager
 init	node_modules/babel-core/lib/transformation/plugin.js	/^  Plugin.prototype.init = function init(loc, i) {$/;"	m	class:Plugin
 init	node_modules/babel-traverse/lib/scope/index.js	/^  Scope.prototype.init = function init() {$/;"	m	class:Scope
@@ -8353,7 +8353,7 @@ shake	contracts/CrowdsaleHandshake.sol	/^    function shake(uint hid, bytes32 of
 shake	contracts/ExchangeHandshake.sol	/^    function shake(uint hid, bytes32 offchain) public payable$/;"	f
 shake	contracts/GroupHandshake.sol	/^    function shake(uint hid, bytes32 acceptor, bytes32 offchain) public {$/;"	f
 shake	contracts/PayableHandshake.sol	/^    function shake(uint hid, bytes32 offchain) public payable {$/;"	f
-shake	contracts/PredictionHandshake.sol	/^        function shake(uint hid, uint side, uint payout, address maker, bytes32 offchain) public payable {$/;"	f
+shake	contracts/PredictionHandshake.sol	/^        function shake(uint hid, uint side, uint takerOdds, address maker, uint makerOdds, bytes32 offchain) public payable {$/;"	f
 shallowEqual	node_modules/babel-types/lib/index.js	/^function shallowEqual(actual, expected) {$/;"	f
 shannon	node_modules/web3/lib/utils/utils.js	/^    'Gwei':         '1000000000',$/;"	p	class:unitMap
 shareCommentsWithSiblings	node_modules/babel-traverse/lib/path/comments.js	/^function shareCommentsWithSiblings() {$/;"	f
@@ -9273,7 +9273,7 @@ unescapeHtmlChar	node_modules/lodash/_unescapeHtmlChar.js	/^var unescapeHtmlChar
 unicodeSize	node_modules/lodash/_unicodeSize.js	/^function unicodeSize(string) {$/;"	f
 unicodeToArray	node_modules/lodash/_unicodeToArray.js	/^function unicodeToArray(string) {$/;"	f
 unicodeWords	node_modules/lodash/_unicodeWords.js	/^function unicodeWords(string) {$/;"	f
-uninit	contracts/PredictionHandshake.sol	/^        function uninit(uint hid, uint side, uint stake, uint payout, bytes32 offchain) public onlyPredictor(hid) {$/;"	f
+uninit	contracts/PredictionHandshake.sol	/^        function uninit(uint hid, uint side, uint stake, uint odds, bytes32 offchain) public onlyPredictor(hid) {$/;"	f
 uninstall	node_modules/web3/lib/web3/requestmanager.js	/^    this.polls[pollId] = {data: data, id: pollId, callback: callback, uninstall: uninstall};$/;"	p	class:RequestManager.this.polls
 union	node_modules/lodash/union.js	/^var union = baseRest(function(arrays) {$/;"	v
 unionBy	node_modules/lodash/unionBy.js	/^var unionBy = baseRest(function(arrays) {$/;"	v
