@@ -26,6 +26,8 @@ contract("ExchangeHandshake", (accounts) => {
 
     let serviceValue = web3.toWei(1)
     let partialValue = web3.toWei(0.4)
+    let partialValue2 = web3.toWei(0.2)
+
 
     const zeroValue = web3.toWei(0)
 
@@ -59,7 +61,7 @@ contract("ExchangeHandshake", (accounts) => {
 
         })
 
-        it('should not able transfer coin when escrow < partialFund', async () => {
+        it('should not able to transfer coin when escrow < partialFund', async () => {
 
             tx1 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner1, value: serviceValue })
             tx2 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner2, value: serviceValue })
@@ -91,7 +93,45 @@ contract("ExchangeHandshake", (accounts) => {
 
         })
 
-        it('should not able transfer coin by customer', async () => {
+        it('should change stage to done when transfer all coin in escrow', async () => {
+
+            tx1 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner3, value: serviceValue })
+
+            hid1 = await oc(tx1, "__initByShopOwner", "hid")
+            //the first time
+            tx1 = await hs.releasePartialFund(hid1,customer1,partialValue, offchain,offchain2, { from: shopOwner3})
+            let releaseHid1 = await oc(tx1, "__releasePartialFund", "hid")
+            let amount1 = await oc(tx1, "__releasePartialFund", "amount")
+
+            eq(Number(hid1), Number(releaseHid1))
+            eq(Number(partialValue), Number(amount1))
+
+            //second times
+            tx1 = await hs.releasePartialFund(hid1,customer1,partialValue, offchain,offchain2, { from: shopOwner3})
+            releaseHid1 = await oc(tx1, "__releasePartialFund", "hid")
+            amount1 = await oc(tx1, "__releasePartialFund", "amount")
+
+            eq(Number(hid1), Number(releaseHid1))
+            eq(Number(partialValue), Number(amount1))
+
+            //third times
+            tx1 = await hs.releasePartialFund(hid1, customer1, partialValue2, offchain, offchain2, { from: shopOwner3})
+
+            tx1 = await hs.getBalance(hid1, { from: shopOwner3})
+            console.log(Number(tx1))
+
+            eq(Number(tx1), Number(serviceValue)-Number(amount1)*2 - Number(partialValue2))
+            eq(Number(tx1), 0)
+
+            tx1 = await hs.getState(hid1)
+            eq(4, Number(tx1)) //4:done stage
+
+            await u.assertRevert(hs.releasePartialFund(hid1,customer1,partialValue, offchain,offchain2, { from: shopOwner3}))
+
+
+        })
+
+        it('should not able to transfer coin by another one', async () => {
 
             tx1 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner1, value: serviceValue })
             tx2 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner2, value: serviceValue })
@@ -123,7 +163,7 @@ contract("ExchangeHandshake", (accounts) => {
 
         })
 
-        it('should not able cancel by customer', async () => {
+        it('should not able to cancel by customer', async () => {
 
             tx1 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByShopOwner", "hid")
@@ -161,12 +201,60 @@ contract("ExchangeHandshake", (accounts) => {
             let blb1= u.balance(shopOwner1)
 
             tx1 = await hs.finish(hid1, offchain, { from: customer1})
-            finishHid1 = await oc(tx1, "__accept", "hid")
+            finishHid1 = await oc(tx1, "__finish", "hid")
             eq(Number(hid1), Number(finishHid1))
 
             let bla1= u.balance(shopOwner1)
             eq(Number(blb1)+ Number(serviceValue), Number(bla1))
 
+        })
+
+        it('should not able to transfer coin by Shop Owner', async () => {
+
+            tx1 = await hs.initByCustomer(shopOwner1, serviceValue, offchain, { from: customer2, value: serviceValue })
+            hid1 = await oc(tx1, "__initByCustomer", "hid")
+
+            tx1 = await hs.shake(hid1, offchain, { from: shopOwner1})
+            shakeHid1 = await oc(tx1, "__shake", "hid")
+            eq(Number(hid1), Number(shakeHid1))
+
+            await u.assertRevert(hs.finish(hid1, offchain, { from: shopOwner1}))
+
+        })
+
+        it('should reject after shook by customer successful', async () => {
+
+            tx1 = await hs.initByCustomer(shopOwner1, serviceValue, offchain, { from: customer2, value: serviceValue })
+            hid1 = await oc(tx1, "__initByCustomer", "hid")
+
+            tx1 = await hs.shake(hid1, offchain, { from: shopOwner1})
+            shakeHid1 = await oc(tx1, "__shake", "hid")
+            eq(Number(hid1), Number(shakeHid1))
+
+            tx1 = await hs.reject(hid1, offchain, { from: customer2})
+            rejectHid1 = await oc(tx1, "__reject", "hid")
+            eq(Number(hid1), Number(rejectHid1))
+
+            tx1 = await hs.getState(hid1)
+            eq(2, Number(tx1)) //5:rejected stage
+
+        })
+
+        it('should reject after shook by shop owner successful', async () => {
+
+            tx1 = await hs.initByCustomer(shopOwner3, serviceValue, offchain, { from: customer2, value: serviceValue })
+            hid1 = await oc(tx1, "__initByCustomer", "hid")
+
+            tx1 = await hs.shake(hid1, offchain, { from: shopOwner3})
+            shakeHid1 = await oc(tx1, "__shake", "hid")
+            eq(Number(hid1), Number(shakeHid1))
+
+            tx1 = await hs.reject(hid1, offchain, { from: shopOwner3})
+            rejectHid1 = await oc(tx1, "__reject", "hid")
+            eq(Number(hid1), Number(rejectHid1))
+
+            tx1 = await hs.getState(hid1)
+            eq(2, Number(tx1)) //2:rejected stage
 
         })
     })

@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 contract ExchangeShop {
 
-    enum S { Inited, Shaked, Rejected, Done, Cancelled }
+    enum S { Inited, Shaked, Rejected, Cancelled,Done }
 
     struct Exchange {
         address shopOwner;
@@ -22,7 +22,7 @@ contract ExchangeShop {
     event __cancel(uint hid, bytes32 offchain);
     event __shake(uint hid, bytes32 offchain);
     event __reject(uint hid, bytes32 offchain);
-    event __accept(uint hid, bytes32 offchain);
+    event __finish(uint hid, bytes32 offchain);
 
 
     //success if sender is shopOwner
@@ -144,7 +144,7 @@ contract ExchangeShop {
         p.shopOwner.transfer(p.escrow);
         p.escrow = 0;
         p.state = S.Done;
-        emit __accept(hid, offchain);
+        emit __finish(hid, offchain);
     }
 
 
@@ -155,7 +155,7 @@ contract ExchangeShop {
         Exchange storage p = ex[hid];
         require(msg.sender == p.shopOwner
                 ||  msg.sender == p.customer);
-        p.state = S.Cancelled;
+        p.state = S.Rejected;
         p.customer.transfer(p.escrow);
         emit __reject(hid, offchain);
     }
