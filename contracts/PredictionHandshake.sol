@@ -74,6 +74,22 @@ contract PredictionHandshake {
                 emit __test__init(hid, m.open[msg.sender][side].stake, m.open[msg.sender][side].payout, offchain);
         }
 
+        function multiInit(uint[] hid, uint[] side, uint[] payout, bytes32[] offchain) public payable {
+            require(hid.length == side.length);
+            require(hid.length == payout.length);
+            require(hid.length == offchain.length);
+
+            for (uint i = 0; i < hid.length; i++) {
+                Market storage m = markets[hid[i]];
+                require(now < m.closingTime);
+                // TODO: check this
+                m.open[msg.sender][side[i]].stake += msg.value;
+                m.open[msg.sender][side[i]].payout += payout[i];
+                emit __init(hid[i], offchain[i]);
+                emit __test__init(hid[i], m.open[msg.sender][side[i]].stake, m.open[msg.sender][side[i]].payout, offchain[i]);
+            }
+        }
+
         event __uninit(uint hid, bytes32 offchain);
         event __test__uninit(uint hid, uint stake, uint payout, bytes32 offchain);
 
