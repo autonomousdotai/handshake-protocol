@@ -41,12 +41,10 @@ contract("PredictionHandshake", (accounts) => {
 
                 it('should create the first prediction market', async () => {
                         const i = {
-                                closingWindow: 10,
                                 fee: 2,
-                                reportWindow: 10,
-                                reportFee: 7,
                                 source: s2b("livescore.com"),
-                                reporter: reporter1,
+                                closingWindow: 10,
+                                reportWindow: 10,
                                 disputeWindow: 10,
                                 creator: creator1 
                         }
@@ -54,28 +52,25 @@ contract("PredictionHandshake", (accounts) => {
                                 hid: 0
                         }
 
-                        const tx = await hs.createMarket(i.closingWindow, i.fee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
 
                 it('should create the second prediction market', async () => {
                         const i = {
-                                closingWindow: 10,
                                 fee: 1,
-                                reportWindow: 10,
-                                reportFee: 7,
                                 source: s2b("livescore.com"),
-                                reporter: reporter1,
+                                closingWindow: 10,
+                                reportWindow: 10,
                                 disputeWindow: 10,
-                                reporter: reporter1,
                                 creator: creator2 
                         }
                         const o = {
                                 hid: 1
                         }
 
-                        const tx = await hs.createMarket(i.closingWindow, i.fee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })

@@ -42,11 +42,12 @@ contract PredictionHandshake {
                 mapping(uint => uint) odds; // odds => size
         }
 
-        Market[] public markets;
-        address public root;
         uint public NETWORK_FEE = 20; // 20%
         uint public ODDS_ROUND_UP = 100; // 2.25 is 225 
         uint public DISPUTE_THRESHOLD = 5; // 5%
+
+        Market[] public markets;
+        address public root;
 
         constructor() public {
                 root = msg.sender;
@@ -55,10 +56,10 @@ contract PredictionHandshake {
         event __createMarket(uint hid, bytes32 offchain); 
 
         function createMarket(
-                uint closingWindow, 
                 uint fee, 
-                uint reportWindow, 
                 bytes32 source,
+                uint closingWindow, 
+                uint reportWindow, 
                 uint disputeWindow,
                 bytes32 offchain
         ) 
@@ -66,10 +67,10 @@ contract PredictionHandshake {
         {
                 Market memory m;
                 m.creator = msg.sender;
-                m.closingTime = now + closingWindow * 1 seconds;
                 m.fee = fee;
-                m.reportTime = m.closingTime + reportWindow * 1 seconds;
                 m.source = source;
+                m.closingTime = now + closingWindow * 1 seconds;
+                m.reportTime = m.closingTime + reportWindow * 1 seconds;
                 m.disputeTime = m.reportTime + disputeWindow * 1 seconds;
                 m.state = 1;
                 markets.push(m);
