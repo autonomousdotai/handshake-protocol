@@ -34,8 +34,8 @@ contract PredictionHandshake {
 
                 uint state;
                 uint outcome;
-                uint totalStakes;
-                uint disputeStakes;
+                uint totalStake;
+                uint disputeStake;
                 bool resolved;
 
                 mapping(address => mapping(uint => Order)) open; // address => side => order
@@ -165,7 +165,8 @@ contract PredictionHandshake {
                 m.matched[taker][side].odds[takerOdds] += takerStake;
                 m.matched[taker][side].payout += takerPayout;
 
-                m.totalStakes += payout;
+                // TODO: add both takerStake and makerStake?
+                m.totalStake += takerStake + makerStake;
 
                 emit __shake(hid, offchain);
 
@@ -259,10 +260,10 @@ contract PredictionHandshake {
                 Market storage m = markets[hid]; 
                 require(m.state == 2);
                 require(!m.resolved);
-                m.disputeStakes += m.matched[msg.sender][m.outcome].stake;
+                m.disputeStake += m.matched[msg.sender][m.outcome].stake;
 
                 // if dispute stakes > 5% of the total stakes
-                if (100 * m.disputeStakes > DISPUTE_THRESHOLD * m.totalStakes) {
+                if (100 * m.disputeStake > DISPUTE_THRESHOLD * m.totalStake) {
                         m.state = 3;
                 }
                 emit __dispute(hid, offchain);
