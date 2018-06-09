@@ -101,7 +101,7 @@ contract PredictionHandshake {
 
         // market taker
         function shake(uint hid, uint side, uint takerOdds, address maker, uint makerOdds, bytes32 offchain) public payable {
-                require(maker != 0);
+                //require(maker != 0);
                 Market storage m = markets[hid];
                 require(now < m.closingTime);
 
@@ -113,9 +113,15 @@ contract PredictionHandshake {
                 uint makerPayout = (makerStake * makerOdds) / ODDS_ROUND_UP;
 
                 // check if the odds matching is valid
-                require(makerOdds >= takerOdds * (makerOdds -1));
+                require(side == 1 || side == 2);
+                if (side == 2) {
+                        require(takerOdds >= makerOdds * ((takerOdds - 100) / 100));
+                } else if (side == 1) {
+                        require(takerOdds <= makerOdds * ((takerOdds - 100) / 100));
+                }
 
                 // check if the stake is sufficient
+                // TODO: debug here
                 require(m.open[maker][3-side].stake >= makerStake);
                 require(m.open[maker][3-side].odds[makerOdds] >= makerStake);
                 require(m.open[maker][3-side].payout >= makerPayout);
