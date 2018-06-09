@@ -36,7 +36,7 @@ contract GroupHandshake {
         handshakes.push(hs);
 
         addValidator(handshakes.length - 1, acceptors);
-        __init(handshakes.length - 1, offchain);
+        emit __init(handshakes.length - 1, offchain);
     }
 
     /**
@@ -59,7 +59,7 @@ contract GroupHandshake {
         } else {
             hs.state = S.Shaked;
         }
-        __shake(hid, hs.state, offchain);
+        emit __shake(hid, hs.state, offchain);
     }
 
     function addValidator(uint hid, bytes32[] acceptors) private {

@@ -25,7 +25,7 @@ contract BasicHandshake {
     */
     function init(address acceptor, bytes32 offchain) public {
         handshakes.push(Handshake(msg.sender, acceptor));
-        __init(handshakes.length - 1, offchain);
+        emit __init(handshakes.length - 1, offchain);
     }
 
     /**
@@ -40,6 +40,6 @@ contract BasicHandshake {
         } else {
             require(handshakes[hid].acceptor == msg.sender);
         }
-        __shake(hid, offchain);
+        emit __shake(hid, offchain);
     }
 }

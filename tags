@@ -697,7 +697,6 @@ BasicHandshake	contracts/BasicHandshake.sol	/^contract BasicHandshake {$/;"	c
 Batch	node_modules/web3/lib/web3.js	/^var Batch = require('.\/web3\/batch');$/;"	v
 Batch	node_modules/web3/lib/web3/batch.js	/^var Batch = function (web3) {$/;"	c
 Beta	node_modules/babylon/lib/index.js	/^  Alpha: "\\u0391",$/;"	p	class:XHTMLEntities
-BettingHandshake	contracts/BettingHandshake.sol	/^    function BettingHandshake() public {$/;"	f
 BettingHandshake	contracts/BettingHandshake.sol	/^contract BettingHandshake {$/;"	c
 BettingHandshake	migrations/3_betting.js	/^var BettingHandshake = artifacts.require('BettingHandshake');$/;"	v
 BigNumber	node_modules/bignumber.js/bignumber.js	/^        function BigNumber( n, b ) {$/;"	f	function:another
@@ -1252,7 +1251,6 @@ Method	node_modules/web3/lib/web3/methods/personal.js	/^var Method = require('..
 Method	node_modules/web3/lib/web3/methods/shh.js	/^var Method = require('..\/method');$/;"	v
 Method	node_modules/web3/lib/web3/methods/swarm.js	/^var Method = require('..\/method');$/;"	v
 Method	node_modules/web3/lib/web3/methods/watches.js	/^var Method = require('..\/method');$/;"	v
-Migrations	contracts/Migrations.sol	/^  function Migrations() public {$/;"	f
 Migrations	contracts/Migrations.sol	/^contract Migrations {$/;"	c
 Migrations	migrations/1_initial_migration.js	/^var Migrations = artifacts.require(".\/Migrations.sol");$/;"	v
 MimeTypeArray	node_modules/core-js/modules/web.dom.iterable.js	/^  MediaList: true, \/\/ TODO: Not spec compliant, should be false.$/;"	p	class:DOMIterables
@@ -1475,7 +1473,6 @@ RegExpProto	node_modules/core-js/modules/es7.string.match-all.js	/^var RegExpPro
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^  function Renamer(binding, oldName, newName) {$/;"	c	class:Renamer
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^  }$/;"	c
 Renamer	node_modules/babel-traverse/lib/scope/lib/renamer.js	/^var Renamer = function () {$/;"	f
-Reputation	contracts/Reputation.sol	/^        function Reputation() public {$/;"	f
 Reputation	contracts/Reputation.sol	/^contract Reputation {$/;"	c
 Reputation	migrations/8_reputation.js	/^var Reputation = artifacts.require('Reputation');$/;"	v
 RequestManager	node_modules/web3/lib/web3.js	/^var RequestManager = require('.\/web3\/requestmanager');$/;"	v
@@ -1879,6 +1876,7 @@ __closeBet	contracts/BettingHandshake.sol	/^    event __closeBet(uint hid, S sta
 __collect	contracts/PredictionHandshake.sol	/^        event __collect(uint hid, bytes32 offchain);$/;"	e
 __createMarket	contracts/PredictionHandshake.sol	/^        event __createMarket(uint hid, bytes32 offchain); $/;"	e
 __deliver	contracts/PayableHandshake.sol	/^    event __deliver(uint hid, bytes32 offchain);$/;"	e
+__dispute	contracts/PredictionHandshake.sol	/^        event __dispute(uint hid, bytes32 offchain);$/;"	e
 __draw	contracts/BettingHandshake.sol	/^    event __draw(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
 __init	contracts/BasicHandshake.sol	/^    event __init(uint hid, bytes32 offchain);$/;"	e
 __init	contracts/BettingHandshake.sol	/^    event __init(uint hid, S state, uint balance, uint escrow, bytes32 offchain); $/;"	e
@@ -1894,6 +1892,7 @@ __reject	contracts/BettingHandshake.sol	/^    event __reject(uint hid, S state, 
 __reject	contracts/ExchangeHandshake.sol	/^    event __reject(uint hid, bytes32 offchain);$/;"	e
 __reject	contracts/PayableHandshake.sol	/^    event __reject(uint hid, bytes32 offchain);$/;"	e
 __report	contracts/PredictionHandshake.sol	/^        event __report(uint hid, bytes32 offchain);$/;"	e
+__resolve	contracts/PredictionHandshake.sol	/^        event __resolve(uint hid, bytes32 offchain);$/;"	e
 __setFee	contracts/ExchangeHandshake.sol	/^    event __setFee(uint fee, uint feeRefund);$/;"	e
 __setWinner	contracts/BettingHandshake.sol	/^    event __setWinner(uint hid, S state, uint balance, uint escrow, bytes32 offchain);$/;"	e
 __shake	contracts/BasicHandshake.sol	/^    event __shake(uint hid, bytes32 offchain);$/;"	e
@@ -4875,6 +4874,7 @@ disapprove	contracts/Reputation.sol	/^        function disapprove(address a) pub
 displayName	node_modules/web3/lib/web3/event.js	/^SolidityEvent.prototype.displayName = function () {$/;"	m	class:SolidityEvent
 displayName	node_modules/web3/lib/web3/function.js	/^SolidityFunction.prototype.displayName = function () {$/;"	m	class:SolidityFunction
 displayTransfer	node_modules/web3/example/icap.html	/^    function displayTransfer(text) {$/;"	f
+dispute	contracts/PredictionHandshake.sol	/^        function dispute(uint hid, bytes32 offchain) public {$/;"	f
 dissoc	node_modules/lodash/fp/_mapping.js	/^  'contains': 'includes',$/;"	p	class:exports.aliasToReal
 dissocPath	node_modules/lodash/fp/_mapping.js	/^  'dissoc': 'unset',$/;"	p	class:exports.aliasToReal
 divide	node_modules/babylon/lib/index.js	/^  ouml: "\\xF6",$/;"	p	class:XHTMLEntities
@@ -8107,6 +8107,7 @@ require.extensions	node_modules/babel-register/lib/node.js	/^  var old = oldHand
 require.extensions	node_modules/json5/lib/require.js	/^var JSON5 = require('.\/json5');$/;"	f
 reset	node_modules/web3/lib/web3.js	/^Web3.prototype.reset = function (keepIsSyncing) {$/;"	m	class:Web3
 reset	node_modules/web3/lib/web3/requestmanager.js	/^RequestManager.prototype.reset = function (keepIsSyncing) {$/;"	m	class:RequestManager
+resolve	contracts/PredictionHandshake.sol	/^        function resolve(uint hid, uint outcome, bytes32 offchain) public {$/;"	f
 resolve	node_modules/babel-traverse/lib/path/introspection.js	/^function resolve(dangerous, resolved) {$/;"	f
 resolveCall	node_modules/babel-traverse/lib/path/inference/inferers.js	/^function resolveCall(callee) {$/;"	f
 resolveFromPossibleNames	node_modules/babel-core/lib/helpers/resolve-from-possible-names.js	/^function resolveFromPossibleNames(possibleNames, dirname) {$/;"	f
@@ -8271,7 +8272,7 @@ setCacheAdd	node_modules/lodash/_setCacheAdd.js	/^function setCacheAdd(value) {$
 setCacheAdd	node_modules/lodash/lodash.js	/^    function setCacheAdd(value) {$/;"	c
 setCacheHas	node_modules/lodash/_setCacheHas.js	/^function setCacheHas(value) {$/;"	f
 setCacheHas	node_modules/lodash/lodash.js	/^    function setCacheHas(value) {$/;"	f
-setCompleted	contracts/Migrations.sol	/^  function setCompleted(uint completed) public restricted {$/;"	f
+setCompleted	contracts/Migrations.sol	/^        function setCompleted(uint completed) public restricted {$/;"	f
 setContext	node_modules/babel-traverse/lib/path/context.js	/^function setContext(context) {$/;"	c
 setContractAddress	node_modules/web3/example/signature-verifier.js	/^function setContractAddress(conAddress){$/;"	f
 setData	node_modules/babel-traverse/lib/path/index.js	/^  NodePath.prototype.setData = function setData(key, val) {$/;"	m	class:NodePath
@@ -9322,7 +9323,7 @@ updateWith	node_modules/lodash/lodash.js	/^    function updateWith(object, path,
 updateWith	node_modules/lodash/updateWith.js	/^function updateWith(object, path, updater, customizer) {$/;"	f
 updateWrapDetails	node_modules/lodash/_updateWrapDetails.js	/^function updateWrapDetails(details, bitmask) {$/;"	f
 updateWrapDetails	node_modules/lodash/lodash.js	/^    function updateWrapDetails(details, bitmask) {$/;"	f
-upgrade	contracts/Migrations.sol	/^  function upgrade(address new_address) public restricted {$/;"	f
+upgrade	contracts/Migrations.sol	/^        function upgrade(address new_address) public restricted {$/;"	f
 upperCase	node_modules/lodash/upperCase.js	/^var upperCase = createCompounder(function(result, word, index) {$/;"	v
 upperFirst	node_modules/lodash/upperFirst.js	/^var upperFirst = createCaseFirst('toUpperCase');$/;"	v
 upsih	node_modules/babylon/lib/index.js	/^  thetasym: "\\u03D1",$/;"	p	class:XHTMLEntities

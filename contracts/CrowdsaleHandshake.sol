@@ -63,7 +63,7 @@ contract CrowdsaleHandshake {
                           now + deadline * 1 seconds,
                           0,
                           S.Inited, 0));
-        __init(cs.length - 1, S.Inited, offchain);
+        emit __init(cs.length - 1, S.Inited, offchain);
     }
 
     event __shake(uint hid, S state, uint balance, bytes32 offchain);
@@ -82,7 +82,7 @@ contract CrowdsaleHandshake {
         if (c.state == S.Inited && c.balance >= c.goal) {
             c.state = S.Shaked;
         }
-        __shake(hid, c.state, c.balance, offchain);
+        emit __shake(hid, c.state, c.balance, offchain);
     }
 
     event __unshake(uint hid, S state, uint balance, bytes32 offchain);
@@ -103,7 +103,7 @@ contract CrowdsaleHandshake {
             c.state = S.Inited;
         }
         msg.sender.transfer(val);
-        __unshake(hid, c.state, c.balance, offchain);
+        emit __unshake(hid, c.state, c.balance, offchain);
     }
 
     event __cancel(uint hid, S state, bytes32 offchain);
@@ -123,7 +123,7 @@ contract CrowdsaleHandshake {
         if (c.m * 2 > c.totalValue) {  // over 50% of the total contribution of all backers
             c.state = S.Cancelled;
         }
-        __cancel(hid, c.state, offchain);
+        emit __cancel(hid, c.state, offchain);
     }
 
     event __stop(uint hid, S state, bytes32 offchain);
@@ -134,7 +134,7 @@ contract CrowdsaleHandshake {
     function stop(uint hid, bytes32 offchain) public onlyPayee(hid) {
         Crowdsale storage c = cs[hid];
         c.state = S.Cancelled;
-        __stop(hid, c.state, offchain);
+        emit __stop(hid, c.state, offchain);
     }
 
     event __refund(uint hid, S state, bytes32 offchain);
@@ -162,7 +162,7 @@ contract CrowdsaleHandshake {
             c.payers[msg.sender].value = 0;
 
             msg.sender.transfer(amount);
-            __refund(hid, c.state, offchain);
+            emit __refund(hid, c.state, offchain);
         }
     }
 
@@ -203,6 +203,6 @@ contract CrowdsaleHandshake {
         c.lastIncrease = now;
         c.balance -= amount;  // decrease the balance but not the total amount raised
         msg.sender.transfer(amount);
-        __withdraw(hid, amount, offchain);
+        emit __withdraw(hid, amount, offchain);
     }
 }

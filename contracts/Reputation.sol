@@ -7,7 +7,7 @@ contract Reputation {
         mapping(address => bool) public approved;
         address public root;
 
-        function Reputation() public {
+        constructor() public {
                 root = msg.sender;
         }
 

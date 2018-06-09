@@ -54,8 +54,7 @@ contract("PredictionHandshake", (accounts) => {
                                 hid: 0
                         }
 
-                        //const tx = await hs.createMarket(i.closingWindow, i.winningFee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
-                        const tx = await hs.createMarket(i.winningFee, i.creator, i.closingWindow, i.reportWindow, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.closingWindow, i.winningFee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
@@ -76,8 +75,7 @@ contract("PredictionHandshake", (accounts) => {
                                 hid: 1
                         }
 
-                        //const tx = await hs.createMarket(i.closingWindow, i.winningFee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
-                        const tx = await hs.createMarket(i.winningFee, i.creator, i.closingWindow, i.reportWindow, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.closingWindow, i.winningFee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
