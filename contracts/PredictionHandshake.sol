@@ -18,16 +18,10 @@ pragma solidity ^0.4.24;
 
 contract PredictionHandshake {
 
-        struct Order {
-                uint stake;
-                uint payout;
-                mapping(uint => uint) odds; // odds => size
-        }
-
         struct Market {
                 address creator;
                 uint closingTime; 
-                uint winningFee; 
+                uint fee; 
                 uint reportTime; 
                 bytes32 source;
                 uint disputeTime;
@@ -40,6 +34,12 @@ contract PredictionHandshake {
 
                 mapping(address => mapping(uint => Order)) open; // address => side => order
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
+        }
+
+        struct Order {
+                uint stake;
+                uint payout;
+                mapping(uint => uint) odds; // odds => size
         }
 
         Market[] public markets;
@@ -56,7 +56,7 @@ contract PredictionHandshake {
 
         function createMarket(
                 uint closingWindow, 
-                uint winningFee, 
+                uint fee, 
                 uint reportWindow, 
                 bytes32 source,
                 uint disputeWindow,
@@ -67,7 +67,7 @@ contract PredictionHandshake {
                 Market memory m;
                 m.creator = msg.sender;
                 m.closingTime = now + closingWindow * 1 seconds;
-                m.winningFee = winningFee;
+                m.fee = fee;
                 m.reportTime = m.closingTime + reportWindow * 1 seconds;
                 m.source = source;
                 m.disputeTime = m.reportTime + disputeWindow * 1 seconds;
@@ -123,10 +123,10 @@ contract PredictionHandshake {
 
         // market taker
         function shake(uint hid, uint side, uint takerOdds, address maker, uint makerOdds, bytes32 offchain) public payable {
-                //require(maker != 0);
+                require(maker != 0);
+
                 Market storage m = markets[hid];
 
-                require(maker != 0);
                 require(m.state == 1);
                 require(now < m.closingTime);
 
@@ -134,7 +134,7 @@ contract PredictionHandshake {
                 uint takerStake = msg.value;
                 uint takerPayout = (takerStake * takerOdds) / ODDS_ROUND_UP;
 
-                uint makerStake = msg.value * takerOdds - takerStake;
+                uint makerStake = takerPayout - takerStake;
                 uint makerPayout = (makerStake * makerOdds) / ODDS_ROUND_UP;
 
                 // check if the odds matching is valid
@@ -146,7 +146,6 @@ contract PredictionHandshake {
                 }
 
                 // check if the stake is sufficient
-                // TODO: debug here
                 require(m.open[maker][3-side].stake >= makerStake);
                 require(m.open[maker][3-side].odds[makerOdds] >= makerStake);
                 require(m.open[maker][3-side].payout >= makerPayout);
@@ -187,7 +186,7 @@ contract PredictionHandshake {
                 require(now > m.disputeTime);
 
                 // calc network commission, market commission and winnings
-                uint marketComm = (m.matched[msg.sender][m.outcome].payout * m.winningFee) / 100;
+                uint marketComm = (m.matched[msg.sender][m.outcome].payout * m.fee) / 100;
                 uint networkComm = (marketComm * NETWORK_FEE) / 100;
                 uint amt = m.matched[msg.sender][m.outcome].payout;
 

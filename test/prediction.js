@@ -42,7 +42,7 @@ contract("PredictionHandshake", (accounts) => {
                 it('should create the first prediction market', async () => {
                         const i = {
                                 closingWindow: 10,
-                                winningFee: 2,
+                                fee: 2,
                                 reportWindow: 10,
                                 reportFee: 7,
                                 source: s2b("livescore.com"),
@@ -54,7 +54,7 @@ contract("PredictionHandshake", (accounts) => {
                                 hid: 0
                         }
 
-                        const tx = await hs.createMarket(i.closingWindow, i.winningFee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.closingWindow, i.fee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
@@ -62,7 +62,7 @@ contract("PredictionHandshake", (accounts) => {
                 it('should create the second prediction market', async () => {
                         const i = {
                                 closingWindow: 10,
-                                winningFee: 1,
+                                fee: 1,
                                 reportWindow: 10,
                                 reportFee: 7,
                                 source: s2b("livescore.com"),
@@ -75,7 +75,7 @@ contract("PredictionHandshake", (accounts) => {
                                 hid: 1
                         }
 
-                        const tx = await hs.createMarket(i.closingWindow, i.winningFee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        const tx = await hs.createMarket(i.closingWindow, i.fee, i.reportWindow, i.source, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
