@@ -163,24 +163,25 @@ contract PredictionHandshake {
 
                 uint makerStake = takerPayout - takerStake; 
                 uint makerPayout = (makerStake * makerOdds) / ODDS_1;
+                uint makerSide = 3 - side;
 
                 // check if the odds matching is valid
                 require(takerOdds * ODDS_1 >= makerOdds * (takerOdds - ODDS_1));
 
                 // check if the stake is sufficient
-                require(m.open[maker][3-side].odds[makerOdds] >= makerStake);
-                require(m.open[maker][3-side].stake >= makerStake);
-                require(m.open[maker][3-side].payout >= makerPayout);
+                require(m.open[maker][makerSide].odds[makerOdds] >= makerStake);
+                require(m.open[maker][makerSide].stake >= makerStake);
+                require(m.open[maker][makerSide].payout >= makerPayout);
 
                 // remove maker's order from open (could be partial)
-                m.open[maker][3-side].odds[makerOdds] -= makerStake;
-                m.open[maker][3-side].stake -= makerStake;
-                m.open[maker][3-side].payout -= makerPayout;
+                m.open[maker][makerSide].odds[makerOdds] -= makerStake;
+                m.open[maker][makerSide].stake -= makerStake;
+                m.open[maker][makerSide].payout -= makerPayout;
 
                 // add maker's order to matched
-                m.matched[maker][3-side].odds[makerOdds] += makerStake;
-                m.matched[maker][3-side].stake += makerStake;
-                m.matched[maker][3-side].payout += makerPayout;
+                m.matched[maker][makerSide].odds[makerOdds] += makerStake;
+                m.matched[maker][makerSide].stake += makerStake;
+                m.matched[maker][makerSide].payout += makerPayout;
 
                 // add taker's order to matched
                 m.matched[taker][side].odds[takerOdds] += takerStake;
@@ -193,8 +194,8 @@ contract PredictionHandshake {
                 emit __shake(hid, offchain);
 
                 emit __test__shake__taker__matched(m.matched[taker][side].stake, m.matched[taker][side].payout);
-                emit __test__shake__maker__matched(m.matched[maker][3-side].stake, m.matched[maker][3-side].payout);
-                emit __test__shake__maker__open(m.open[maker][3-side].stake, m.open[maker][3-side].payout);
+                emit __test__shake__maker__matched(m.matched[maker][makerSide].stake, m.matched[maker][makerSide].payout);
+                emit __test__shake__maker__open(m.open[maker][makerSide].stake, m.open[maker][makerSide].payout);
 
         }
 
