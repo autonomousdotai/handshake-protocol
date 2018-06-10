@@ -39,7 +39,7 @@ contract("PredictionHandshake", (accounts) => {
 
         describe('create two prediction markets', () => {
 
-                it('should create the first prediction market', async () => {
+                it('should create the 1st prediction market', async () => {
                         const i = {
                                 fee: 2,
                                 source: s2b("livescore.com"),
@@ -57,7 +57,7 @@ contract("PredictionHandshake", (accounts) => {
                         eq(o.hid, await oc(tx, "__createMarket", "hid"))
                 })
 
-                it('should create the second prediction market', async () => {
+                it('should create the 2nd prediction market', async () => {
                         const i = {
                                 fee: 1,
                                 source: s2b("livescore.com"),
@@ -163,6 +163,7 @@ contract("PredictionHandshake", (accounts) => {
                         eq(o.stake, await oc(tx, "__test__init", "stake"))
                         eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
+
         })
 
         describe('place take orders', () => {
@@ -281,9 +282,9 @@ contract("PredictionHandshake", (accounts) => {
                         }
 
                         const tx = await hs.collect(i.hid, OFFCHAIN, {from: i.trader})
-                        // eq(o.networkComm, await oc(tx, "__test__collect", "network"))
+                        eq(o.networkComm, await oc(tx, "__test__collect", "network"))
                         eq(o.marketComm, await oc(tx, "__test__collect", "market"))
-                        // eq(o.payout, await oc(tx, "__test__collect", "trader"))
+                        eq(o.payout, await oc(tx, "__test__collect", "trader"))
                 })
 
                 it("should not be able to collect payout (already did)", async () => {
@@ -295,5 +296,66 @@ contract("PredictionHandshake", (accounts) => {
                 })
         })
 
+        describe('user story: refund (no report and expired)', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 10,
+                                disputeWindow: 10,
+                                creator: creator2 
+                        }
+                        const o = {
+                                hid: 2
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("should init/make the 5th order", async () => {
+                        const i = {
+                                hid: 2,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.stake * i.odds / 100
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                        eq(o.payout, await oc(tx, "__test__init", "payout"))
+                })
+
+                it("should not refund (still within report window)", async () => {
+                        const i = {
+                                hid: 2,
+                                trader: maker2
+                        }
+                        await u.assertRevert(hs.refund(i.hid, OFFCHAIN, {from: i.trader}))
+                })
+
+                it("should refund", async () => {
+                        const i = {
+                                hid: 2,
+                                trader: maker2
+                        }
+                        const o = {
+                                amt: web3.toWei(0.1)
+                        }
+
+                        u.increaseTime(60)
+
+                        const tx = await hs.refund(i.hid, OFFCHAIN, {from: i.trader})
+                        eq(o.amt, await oc(tx, "__test__refund", "amt"))
+                })
+
+        })
 
 })

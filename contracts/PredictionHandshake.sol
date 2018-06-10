@@ -234,6 +234,7 @@ contract PredictionHandshake {
 
 
         event __refund(uint hid, bytes32 offchain);
+        event __test__refund(uint amt);
 
         // refund stakes when market closes (if there is no outcome)
         function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {
@@ -260,6 +261,7 @@ contract PredictionHandshake {
                 msg.sender.transfer(amt);
 
                 emit __refund(hid, offchain);
+                emit __test__refund(amt);
         }
 
 

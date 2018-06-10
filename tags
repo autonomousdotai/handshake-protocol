@@ -1905,6 +1905,7 @@ __shake	contracts/PredictionHandshake.sol	/^        event __shake(uint hid, byte
 __stop	contracts/CrowdsaleHandshake.sol	/^    event __stop(uint hid, S state, bytes32 offchain);$/;"	e
 __test__collect	contracts/PredictionHandshake.sol	/^        event __test__collect(uint network, uint market, uint trader);$/;"	e
 __test__init	contracts/PredictionHandshake.sol	/^        event __test__init(uint stake, uint payout);$/;"	e
+__test__refund	contracts/PredictionHandshake.sol	/^        event __test__refund(uint amt);$/;"	e
 __test__shake__maker__matched	contracts/PredictionHandshake.sol	/^        event __test__shake__maker__matched(uint stake, uint payout);$/;"	e
 __test__shake__maker__open	contracts/PredictionHandshake.sol	/^        event __test__shake__maker__open(uint stake, uint payout);$/;"	e
 __test__shake__taker__matched	contracts/PredictionHandshake.sol	/^        event __test__shake__taker__matched(uint stake, uint payout);$/;"	e
