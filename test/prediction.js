@@ -164,7 +164,7 @@ contract("PredictionHandshake", (accounts) => {
                                 match_taker_stake: i.stake,
                                 match_taker_payout: i.stake * i.takerOdds / 100,
                                 match_maker_stake: web3.toWei(0.1),
-                                match_maker_payout: i.payout,
+                                match_maker_payout: web3.toWei(0.3),
                                 open_maker_stake: web3.toWei(0.1),
                                 open_maker_payout: web3.toWei(0.3)
                         }
@@ -173,13 +173,12 @@ contract("PredictionHandshake", (accounts) => {
                         eq(o.match_taker_stake, await oc(tx, "__test__shake__taker", "stake"))
                         eq(o.match_taker_payout, await oc(tx, "__test__shake__taker", "payout"))
 
-                        /*
-                        eq(o.match_maker_stake, await oc(tx, "__test__shake__maker", "matched_stake"))
-                        eq(o.match_maker_payout, await oc(tx, "__test__shake__maker", "matched_payout"))
+                        eq(o.match_maker_stake, await oc(tx, "__test__shake__maker__matched", "stake"))
+                        eq(o.match_maker_payout, await oc(tx, "__test__shake__maker__matched", "payout"))
 
-                        eq(o.open_maker_stake, await oc(tx, "__test__shake__maker", "open_stake"))
-                        eq(o.open_maker_payout, await oc(tx, "__test__shake__maker", "open_payout"))
-                        */
+                        eq(o.open_maker_stake, await oc(tx, "__test__shake__maker__open", "stake"))
+                        eq(o.open_maker_payout, await oc(tx, "__test__shake__maker__open", "payout"))
+
                 })
         })
 

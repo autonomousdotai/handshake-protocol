@@ -1904,10 +1904,11 @@ __shake	contracts/PayableHandshake.sol	/^    event __shake(uint hid, bytes32 off
 __shake	contracts/PredictionHandshake.sol	/^        event __shake(uint hid, bytes32 offchain);$/;"	e
 __stop	contracts/CrowdsaleHandshake.sol	/^    event __stop(uint hid, S state, bytes32 offchain);$/;"	e
 __test__collect	contracts/PredictionHandshake.sol	/^        event __test__collect(uint network, uint market, uint trader);$/;"	e
-__test__init	contracts/PredictionHandshake.sol	/^        event __test__init(uint hid, uint stake, uint payout, bytes32 offchain);$/;"	e
-__test__shake__maker	contracts/PredictionHandshake.sol	/^        event __test__shake__maker(uint hid, uint matched_stake, uint matched_payout, $/;"	e
-__test__shake__taker	contracts/PredictionHandshake.sol	/^        event __test__shake__taker(uint hid, uint stake, uint payout, bytes32 offchain);$/;"	e
-__test__uninit	contracts/PredictionHandshake.sol	/^        event __test__uninit(uint hid, uint stake, uint payout, bytes32 offchain);$/;"	e
+__test__init	contracts/PredictionHandshake.sol	/^        event __test__init(uint stake, uint payout);$/;"	e
+__test__shake__maker__matched	contracts/PredictionHandshake.sol	/^        event __test__shake__maker__matched(uint stake, uint payout);$/;"	e
+__test__shake__maker__open	contracts/PredictionHandshake.sol	/^        event __test__shake__maker__open(uint stake, uint payout);$/;"	e
+__test__shake__taker	contracts/PredictionHandshake.sol	/^        event __test__shake__taker(uint stake, uint payout);$/;"	e
+__test__uninit	contracts/PredictionHandshake.sol	/^        event __test__uninit(uint stake, uint payout);$/;"	e
 __uninit	contracts/PredictionHandshake.sol	/^        event __uninit(uint hid, bytes32 offchain);$/;"	e
 __unshake	contracts/CrowdsaleHandshake.sol	/^    event __unshake(uint hid, S state, uint balance, bytes32 offchain);$/;"	e
 __webpack_require__	node_modules/core-js/client/core.js	/^\/******\/ 	function __webpack_require__(moduleId) {$/;"	f
@@ -8354,7 +8355,7 @@ shake	contracts/CrowdsaleHandshake.sol	/^    function shake(uint hid, bytes32 of
 shake	contracts/ExchangeHandshake.sol	/^    function shake(uint hid, bytes32 offchain) public payable$/;"	f
 shake	contracts/GroupHandshake.sol	/^    function shake(uint hid, bytes32 acceptor, bytes32 offchain) public {$/;"	f
 shake	contracts/PayableHandshake.sol	/^    function shake(uint hid, bytes32 offchain) public payable {$/;"	f
-shake	contracts/PredictionHandshake.sol	/^        function shake(uint hid, uint side, uint takerOdds, address maker, uint makerOdds, bytes32 offchain) public payable {$/;"	f
+shake	contracts/PredictionHandshake.sol	/^        function shake($/;"	f
 shallowEqual	node_modules/babel-types/lib/index.js	/^function shallowEqual(actual, expected) {$/;"	f
 shannon	node_modules/web3/lib/utils/utils.js	/^    'Gwei':         '1000000000',$/;"	p	class:unitMap
 shareCommentsWithSiblings	node_modules/babel-traverse/lib/path/comments.js	/^function shareCommentsWithSiblings() {$/;"	f
@@ -9274,7 +9275,7 @@ unescapeHtmlChar	node_modules/lodash/_unescapeHtmlChar.js	/^var unescapeHtmlChar
 unicodeSize	node_modules/lodash/_unicodeSize.js	/^function unicodeSize(string) {$/;"	f
 unicodeToArray	node_modules/lodash/_unicodeToArray.js	/^function unicodeToArray(string) {$/;"	f
 unicodeWords	node_modules/lodash/_unicodeWords.js	/^function unicodeWords(string) {$/;"	f
-uninit	contracts/PredictionHandshake.sol	/^        function uninit(uint hid, uint side, uint stake, uint odds, bytes32 offchain) public onlyPredictor(hid) {$/;"	f
+uninit	contracts/PredictionHandshake.sol	/^        function uninit($/;"	f
 uninstall	node_modules/web3/lib/web3/requestmanager.js	/^    this.polls[pollId] = {data: data, id: pollId, callback: callback, uninstall: uninstall};$/;"	p	class:RequestManager.this.polls
 union	node_modules/lodash/union.js	/^var union = baseRest(function(arrays) {$/;"	v
 unionBy	node_modules/lodash/unionBy.js	/^var unionBy = baseRest(function(arrays) {$/;"	v
