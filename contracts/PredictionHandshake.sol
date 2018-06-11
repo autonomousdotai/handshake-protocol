@@ -282,7 +282,7 @@ contract PredictionHandshake {
         event __dispute(uint hid, bytes32 offchain);
 
         // dispute outcome
-        function dispute(uint hid, bytes32 offchain) public {
+        function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(m.state == 2);
                 require(!m.resolved);
