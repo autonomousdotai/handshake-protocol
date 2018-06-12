@@ -1906,12 +1906,12 @@ __shake	contracts/PayableHandshake.sol	/^    event __shake(uint hid, bytes32 off
 __shake	contracts/PredictionHandshake.sol	/^        event __shake(uint hid, bytes32 offchain);$/;"	e
 __stop	contracts/CrowdsaleHandshake.sol	/^    event __stop(uint hid, S state, bytes32 offchain);$/;"	e
 __test__collect	contracts/PredictionHandshake.sol	/^        event __test__collect(uint network, uint market, uint trader);$/;"	e
-__test__init	contracts/PredictionHandshake.sol	/^        event __test__init(uint stake, uint payout);$/;"	e
+__test__init	contracts/PredictionHandshake.sol	/^        event __test__init(uint stake);$/;"	e
 __test__refund	contracts/PredictionHandshake.sol	/^        event __test__refund(uint amt);$/;"	e
 __test__shake__maker__matched	contracts/PredictionHandshake.sol	/^        event __test__shake__maker__matched(uint stake, uint payout);$/;"	e
-__test__shake__maker__open	contracts/PredictionHandshake.sol	/^        event __test__shake__maker__open(uint stake, uint payout);$/;"	e
+__test__shake__maker__open	contracts/PredictionHandshake.sol	/^        event __test__shake__maker__open(uint stake);$/;"	e
 __test__shake__taker__matched	contracts/PredictionHandshake.sol	/^        event __test__shake__taker__matched(uint stake, uint payout);$/;"	e
-__test__uninit	contracts/PredictionHandshake.sol	/^        event __test__uninit(uint stake, uint payout);$/;"	e
+__test__uninit	contracts/PredictionHandshake.sol	/^        event __test__uninit(uint stake);$/;"	e
 __uninit	contracts/PredictionHandshake.sol	/^        event __uninit(uint hid, bytes32 offchain);$/;"	e
 __unshake	contracts/CrowdsaleHandshake.sol	/^    event __unshake(uint hid, S state, uint balance, bytes32 offchain);$/;"	e
 __webpack_require__	node_modules/core-js/client/core.js	/^\/******\/ 	function __webpack_require__(moduleId) {$/;"	f

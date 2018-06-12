@@ -84,8 +84,7 @@ contract PredictionHandshake {
 
 
         event __init(uint hid, bytes32 offchain);
-        event __test__init(uint stake, uint payout);
-
+        event __test__init(uint stake);
 
         // market maker
         function init(
@@ -133,14 +132,13 @@ contract PredictionHandshake {
 
                 m.open[maker][side].stake += msg.value;
                 m.open[maker][side].odds[odds] += msg.value;
-                m.open[maker][side].payout += ((odds * msg.value) / ODDS_1);
                 emit __init(hid, offchain);
-                emit __test__init(m.open[maker][side].stake, m.open[maker][side].payout);
+                emit __test__init(m.open[maker][side].stake);
         }
 
 
         event __uninit(uint hid, bytes32 offchain);
-        event __test__uninit(uint stake, uint payout);
+        event __test__uninit(uint stake);
 
         // market maker cancels order
         function uninit(
@@ -161,19 +159,18 @@ contract PredictionHandshake {
 
                 m.open[msg.sender][side].stake -= stake;
                 m.open[msg.sender][side].odds[odds] -= stake;
-                m.open[msg.sender][side].payout -= ((odds * stake) / ODDS_1);
 
                 msg.sender.transfer(stake);
 
                 emit __uninit(hid, offchain);
-                emit __test__uninit(m.open[msg.sender][side].stake, m.open[msg.sender][side].payout);
+                emit __test__uninit(m.open[msg.sender][side].stake);
         }
 
 
         event __shake(uint hid, bytes32 offchain);
         event __test__shake__taker__matched(uint stake, uint payout);
         event __test__shake__maker__matched(uint stake, uint payout);
-        event __test__shake__maker__open(uint stake, uint payout);
+        event __test__shake__maker__open(uint stake);
 
 
         // market taker
@@ -251,12 +248,10 @@ contract PredictionHandshake {
                 // check if the stake is sufficient
                 require(m.open[maker][makerSide].odds[makerOdds] >= makerStake);
                 require(m.open[maker][makerSide].stake >= makerStake);
-                require(m.open[maker][makerSide].payout >= makerPayout);
 
                 // remove maker's order from open (could be partial)
                 m.open[maker][makerSide].odds[makerOdds] -= makerStake;
                 m.open[maker][makerSide].stake -= makerStake;
-                m.open[maker][makerSide].payout -= makerStake * makerOdds;
 
                 // add maker's order to matched
                 m.matched[maker][makerSide].odds[makerOdds] += makerStake;
@@ -275,7 +270,7 @@ contract PredictionHandshake {
 
                 emit __test__shake__taker__matched(m.matched[taker][side].stake, m.matched[taker][side].payout);
                 emit __test__shake__maker__matched(m.matched[maker][makerSide].stake, m.matched[maker][makerSide].payout);
-                emit __test__shake__maker__open(m.open[maker][makerSide].stake, m.open[maker][makerSide].payout);
+                emit __test__shake__maker__open(m.open[maker][makerSide].stake);
 
         }
 

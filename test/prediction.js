@@ -93,7 +93,7 @@ contract("PredictionHandshake", (accounts) => {
                         }
                         const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
                         eq(o.stake, await oc(tx, "__test__init", "stake"))
-                        eq(o.payout, await oc(tx, "__test__init", "payout"))
+                        // eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
                 it("should init/make 2nd order", async () => {
@@ -110,7 +110,7 @@ contract("PredictionHandshake", (accounts) => {
                         }
                         const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
                         eq(o.stake, await oc(tx, "__test__init", "stake"))
-                        eq(o.payout, await oc(tx, "__test__init", "payout"))
+                        // eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
                 it("should init/make 3rd order", async () => {
@@ -127,7 +127,7 @@ contract("PredictionHandshake", (accounts) => {
                         }
                         const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
                         eq(o.stake, await oc(tx, "__test__init", "stake"))
-                        eq(o.payout, await oc(tx, "__test__init", "payout"))
+                        // eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
                 it("should uninit/cancel 3rd order", async () => {
@@ -144,7 +144,7 @@ contract("PredictionHandshake", (accounts) => {
                         }
                         const tx = await hs.uninit(i.hid, i.side, i.stake, i.odds, OFFCHAIN, {from: i.sender})
                         eq(o.stake, await oc(tx, "__test__uninit", "stake"))
-                        eq(o.payout, await oc(tx, "__test__uninit", "payout"))
+                        // eq(o.payout, await oc(tx, "__test__uninit", "payout"))
                 })
 
                 it("should init/make the 4th order", async () => {
@@ -161,7 +161,7 @@ contract("PredictionHandshake", (accounts) => {
                         }
                         const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
                         eq(o.stake, await oc(tx, "__test__init", "stake"))
-                        eq(o.payout, await oc(tx, "__test__init", "payout"))
+                        // eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
         })
@@ -189,10 +189,10 @@ contract("PredictionHandshake", (accounts) => {
                         const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, {from: i.sender, value: i.stake})
 
                         eq(o.match_taker_stake, await oc(tx, "__test__shake__taker__matched", "stake"))
-                        // eq(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
+                        eq(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
 
                         eq(o.match_maker_stake, await oc(tx, "__test__shake__maker__matched", "stake"))
-                        // eq(o.match_maker_payout, await oc(tx, "__test__shake__maker__matched", "payout"))
+                        eq(o.match_maker_payout, await oc(tx, "__test__shake__maker__matched", "payout"))
 
                         eq(o.open_maker_stake, await oc(tx, "__test__shake__maker__open", "stake"))
                         // eq(o.open_maker_payout, await oc(tx, "__test__shake__maker__open", "payout"))
@@ -220,10 +220,10 @@ contract("PredictionHandshake", (accounts) => {
                         const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, {from: i.sender, value: i.stake})
 
                         eq(o.match_taker_stake, await oc(tx, "__test__shake__taker__matched", "stake"))
-                        // eq(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
+                        eq(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
 
                         eq(o.match_maker_stake, await oc(tx, "__test__shake__maker__matched", "stake"))
-                        // eq(o.match_maker_payout, await oc(tx, "__test__shake__maker__matched", "payout"))
+                        eq(o.match_maker_payout, await oc(tx, "__test__shake__maker__matched", "payout"))
 
                         eq(o.open_maker_stake, await oc(tx, "__test__shake__maker__open", "stake"))
                         // eq(o.open_maker_payout, await oc(tx, "__test__shake__maker__open", "payout"))
@@ -330,7 +330,7 @@ contract("PredictionHandshake", (accounts) => {
                         }
                         const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
                         eq(o.stake, await oc(tx, "__test__init", "stake"))
-                        eq(o.payout, await oc(tx, "__test__init", "payout"))
+                        // eq(o.payout, await oc(tx, "__test__init", "payout"))
                 })
 
                 it("should not refund (still within report window)", async () => {
