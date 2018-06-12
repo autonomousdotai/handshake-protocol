@@ -118,6 +118,7 @@ contract PredictionHandshake {
         {
                 Market storage m = markets[hid];
                 require(m.testDrive[maker] < 3);
+                require(msg.value <= TESTDRIVE_AMT);
                 m.testDrive[maker]++;
                 _init(hid, side, odds, maker, offchain);
         }
@@ -212,6 +213,7 @@ contract PredictionHandshake {
         {
                 Market storage m = markets[hid];
                 require(m.testDrive[taker] < 3);
+                require(msg.value <= TESTDRIVE_AMT);
                 m.testDrive[taker]++;
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
