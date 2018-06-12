@@ -36,7 +36,6 @@ contract PredictionHandshake {
                 mapping(address => mapping(uint => Order)) open; // address => side => order
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
 
-                mapping(address => uint) testDrive; // address => # of test drive
         }
 
         struct Order {
@@ -48,6 +47,8 @@ contract PredictionHandshake {
         uint public NETWORK_FEE = 20; // 20%
         uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
         uint public DISPUTE_THRESHOLD = 5; // 5%
+
+        mapping(address => uint) testDrive; // address => # of test drive
         uint public TESTDRIVE = 3; // test drive 3 times 
         uint public TESTDRIVE_AMT = 1 ether / 1000; // each test drive is 0.0001 eth
 
@@ -116,10 +117,9 @@ contract PredictionHandshake {
                 payable
                 onlyRoot(hid)
         {
-                Market storage m = markets[hid];
-                require(m.testDrive[maker] < TESTDRIVE);
+                require(testDrive[maker] < TESTDRIVE);
                 require(msg.value <= TESTDRIVE_AMT);
-                m.testDrive[maker]++;
+                testDrive[maker]++;
                 _init(hid, side, odds, maker, offchain);
         }
 
@@ -211,10 +211,9 @@ contract PredictionHandshake {
                 public 
                 payable 
         {
-                Market storage m = markets[hid];
-                require(m.testDrive[taker] < TESTDRIVE);
+                require(testDrive[taker] < TESTDRIVE);
                 require(msg.value <= TESTDRIVE_AMT);
-                m.testDrive[taker]++;
+                testDrive[taker]++;
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
 
@@ -386,6 +385,11 @@ contract PredictionHandshake {
                 m.outcome = outcome;
                 m.state = outcome == 0? 1: 2;
                 emit __resolve(hid, offchain);
+        }
+
+
+        function getBalanceTestDrive(address adr) public view returns (uint) {
+                return (TESTDRIVE - testDrive[adr]) * TESTDRIVE_AMT;
         }
 
 
