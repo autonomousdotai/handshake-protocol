@@ -35,7 +35,7 @@ contract PredictionHandshake {
 
                 mapping(address => mapping(uint => Order)) open; // address => side => order
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
-
+                mapping(address => bool) disputed;
         }
 
         struct Order {
@@ -47,10 +47,6 @@ contract PredictionHandshake {
         uint public NETWORK_FEE = 20; // 20%
         uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
         uint public DISPUTE_THRESHOLD = 5; // 5%
-
-        mapping(address => uint) testDrive; // address => # of test drive
-        uint public TESTDRIVE = 3; // test drive 3 times 
-        uint public TESTDRIVE_AMT = 1 ether / 1000; // each test drive is 0.0001 eth
 
         Market[] public markets;
         address public root;
@@ -88,8 +84,7 @@ contract PredictionHandshake {
 
 
         event __init(uint hid, bytes32 offchain);
-        event __test__init(uint stake, uint payout);
-
+        event __test__init(uint stake);
 
         // market maker
         function init(
@@ -117,9 +112,6 @@ contract PredictionHandshake {
                 payable
                 onlyRoot(hid)
         {
-                require(testDrive[maker] < TESTDRIVE);
-                require(msg.value <= TESTDRIVE_AMT);
-                testDrive[maker]++;
                 _init(hid, side, odds, maker, offchain);
         }
 
@@ -140,14 +132,13 @@ contract PredictionHandshake {
 
                 m.open[maker][side].stake += msg.value;
                 m.open[maker][side].odds[odds] += msg.value;
-                m.open[maker][side].payout += ((odds * msg.value) / ODDS_1);
                 emit __init(hid, offchain);
-                emit __test__init(m.open[maker][side].stake, m.open[maker][side].payout);
+                emit __test__init(m.open[maker][side].stake);
         }
 
 
         event __uninit(uint hid, bytes32 offchain);
-        event __test__uninit(uint stake, uint payout);
+        event __test__uninit(uint stake);
 
         // market maker cancels order
         function uninit(
@@ -168,19 +159,18 @@ contract PredictionHandshake {
 
                 m.open[msg.sender][side].stake -= stake;
                 m.open[msg.sender][side].odds[odds] -= stake;
-                m.open[msg.sender][side].payout -= ((odds * stake) / ODDS_1);
 
                 msg.sender.transfer(stake);
 
                 emit __uninit(hid, offchain);
-                emit __test__uninit(m.open[msg.sender][side].stake, m.open[msg.sender][side].payout);
+                emit __test__uninit(m.open[msg.sender][side].stake);
         }
 
 
         event __shake(uint hid, bytes32 offchain);
         event __test__shake__taker__matched(uint stake, uint payout);
         event __test__shake__maker__matched(uint stake, uint payout);
-        event __test__shake__maker__open(uint stake, uint payout);
+        event __test__shake__maker__open(uint stake);
 
 
         // market taker
@@ -211,9 +201,6 @@ contract PredictionHandshake {
                 public 
                 payable 
         {
-                require(testDrive[taker] < TESTDRIVE);
-                require(msg.value <= TESTDRIVE_AMT);
-                testDrive[taker]++;
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
 
@@ -238,12 +225,22 @@ contract PredictionHandshake {
                 require(m.state == 1);
                 require(now < m.closingTime);
 
-                uint takerStake = msg.value;
-                uint takerPayout = (takerStake * takerOdds) / ODDS_1;
-
-                uint makerStake = takerPayout - takerStake; 
-                uint makerPayout = (makerStake * makerOdds) / ODDS_1;
                 uint makerSide = 3 - side;
+
+                uint takerStake = msg.value;
+                uint makerStake = m.open[maker][makerSide].stake;
+
+                uint takerPayout = (takerStake * takerOdds) / ODDS_1;
+                uint makerPayout = (makerStake * makerOdds) / ODDS_1;
+
+
+                if (takerPayout < makerPayout) {
+                        makerStake = takerPayout - takerStake;
+                        makerPayout = takerPayout;
+                } else {
+                        takerStake = makerPayout - makerStake;
+                        takerPayout = makerPayout;
+                }
 
                 // check if the odds matching is valid
                 require(takerOdds * ODDS_1 >= makerOdds * (takerOdds - ODDS_1));
@@ -251,12 +248,10 @@ contract PredictionHandshake {
                 // check if the stake is sufficient
                 require(m.open[maker][makerSide].odds[makerOdds] >= makerStake);
                 require(m.open[maker][makerSide].stake >= makerStake);
-                require(m.open[maker][makerSide].payout >= makerPayout);
 
                 // remove maker's order from open (could be partial)
                 m.open[maker][makerSide].odds[makerOdds] -= makerStake;
                 m.open[maker][makerSide].stake -= makerStake;
-                m.open[maker][makerSide].payout -= makerPayout;
 
                 // add maker's order to matched
                 m.matched[maker][makerSide].odds[makerOdds] += makerStake;
@@ -275,7 +270,7 @@ contract PredictionHandshake {
 
                 emit __test__shake__taker__matched(m.matched[taker][side].stake, m.matched[taker][side].payout);
                 emit __test__shake__maker__matched(m.matched[maker][makerSide].stake, m.matched[maker][makerSide].payout);
-                emit __test__shake__maker__open(m.open[maker][makerSide].stake, m.open[maker][makerSide].payout);
+                emit __test__shake__maker__open(m.open[maker][makerSide].stake);
 
         }
 
@@ -298,7 +293,8 @@ contract PredictionHandshake {
                 amt += m.open[msg.sender][1].stake; 
                 amt += m.open[msg.sender][2].stake;
 
-                require(amt > 0);
+                require(amt - marketComm > 0);
+                require(marketComm - networkComm > 0);
 
                 // wipe data
                 m.matched[msg.sender][m.outcome].payout = 0;
@@ -364,9 +360,15 @@ contract PredictionHandshake {
         // dispute outcome
         function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
+
                 require(m.state == 2);
                 require(!m.resolved);
-                m.disputeStake += m.matched[msg.sender][m.outcome].stake;
+
+                require(!m.disputed[msg.sender]);
+                m.disputed[msg.sender] = true;
+
+                m.disputeStake += m.matched[msg.sender][1].stake;
+                m.disputeStake += m.matched[msg.sender][2].stake;
 
                 // if dispute stakes > 5% of the total stakes
                 if (100 * m.disputeStake > DISPUTE_THRESHOLD * m.totalStake) {
@@ -385,11 +387,6 @@ contract PredictionHandshake {
                 m.outcome = outcome;
                 m.state = outcome == 0? 1: 2;
                 emit __resolve(hid, offchain);
-        }
-
-
-        function getBalanceTestDrive(address adr) public view returns (uint) {
-                return (TESTDRIVE - testDrive[adr]) * TESTDRIVE_AMT;
         }
 
 
