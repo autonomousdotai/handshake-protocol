@@ -35,7 +35,7 @@ contract PredictionHandshake {
 
                 mapping(address => mapping(uint => Order)) open; // address => side => order
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
-
+                mapping(address => bool) disputed;
         }
 
         struct Order {
@@ -365,13 +365,15 @@ contract PredictionHandshake {
         // dispute outcome
         function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
+
                 require(m.state == 2);
                 require(!m.resolved);
 
-                // TODO: mark the msg.sender already reported
- 
-                m.disputeStake += m.matched[msg.sender][m.outcome].stake;
-                m.disputeStake += m.matched[msg.sender][3-m.outcome].stake;
+                require(!m.disputed[msg.sender]);
+                m.disputed[msg.sender] = true;
+
+                m.disputeStake += m.matched[msg.sender][1].stake;
+                m.disputeStake += m.matched[msg.sender][2].stake;
 
                 // if dispute stakes > 5% of the total stakes
                 if (100 * m.disputeStake > DISPUTE_THRESHOLD * m.totalStake) {
