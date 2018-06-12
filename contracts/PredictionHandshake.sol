@@ -117,7 +117,7 @@ contract PredictionHandshake {
                 onlyRoot(hid)
         {
                 Market storage m = markets[hid];
-                require(m.testDrive[maker] < 3);
+                require(m.testDrive[maker] < TESTDRIVE);
                 require(msg.value <= TESTDRIVE_AMT);
                 m.testDrive[maker]++;
                 _init(hid, side, odds, maker, offchain);
@@ -212,7 +212,7 @@ contract PredictionHandshake {
                 payable 
         {
                 Market storage m = markets[hid];
-                require(m.testDrive[taker] < 3);
+                require(m.testDrive[taker] < TESTDRIVE);
                 require(msg.value <= TESTDRIVE_AMT);
                 m.testDrive[taker]++;
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
