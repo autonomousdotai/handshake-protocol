@@ -103,6 +103,7 @@ contract ExchangeShop {
         Exchange storage p = ex[hid];
         p.state = S.Cancelled;
         msg.sender.transfer(p.escrow);
+        p.escrow = 0;
         emit __closeByShopOwner(hid, offchain);
     }
 
@@ -193,11 +194,11 @@ contract ExchangeShop {
     //CashOwner reject the transaction
     function reject(uint hid, bytes32 offchain) public
         onlyShopOwnerOrCustomer(hid)
-        atState(S.Shaked, hid)
     {
         Exchange storage p = ex[hid];
         p.state = S.Rejected;
         p.customer.transfer(p.escrow);
+        p.escrow = 0;
         emit __reject(hid, offchain);
     }
 
