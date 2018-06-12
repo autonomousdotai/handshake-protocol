@@ -1556,6 +1556,8 @@ Settings	node_modules/web3/lib/web3.js	/^var Settings = require('.\/web3\/settin
 Settings	node_modules/web3/lib/web3/settings.js	/^var Settings = function () {$/;"	c
 Shh	node_modules/web3/lib/web3.js	/^var Shh = require('.\/web3\/methods\/shh');$/;"	v
 Shh	node_modules/web3/lib/web3/methods/shh.js	/^var Shh = function (web3) {$/;"	c
+Shuriken	contracts/Shuriken.sol	/^contract Shuriken is StandardToken {$/;"	c
+Shuriken	migrations/8_shuriken.js	/^var Shuriken = artifacts.require('Shuriken');$/;"	v
 Sigma	node_modules/babylon/lib/index.js	/^  Rho: "\\u03A1",$/;"	p	class:XHTMLEntities
 SolidityCoder	node_modules/web3/lib/solidity/coder.js	/^var SolidityCoder = function (types) {$/;"	c
 SolidityEvent	node_modules/web3/lib/web3/allevents.js	/^var SolidityEvent = require('.\/event');$/;"	v
@@ -6924,6 +6926,7 @@ module.exports	migrations/5_crowdsale.js	/^var CrowdsaleHandshake = artifacts.re
 module.exports	migrations/6_exchange.js	/^var ExchangeHandshake = artifacts.require('ExchangeHandshake');$/;"	f
 module.exports	migrations/7_prediction.js	/^var PredictionHandshake = artifacts.require('PredictionHandshake');$/;"	f
 module.exports	migrations/8_reputation.js	/^var Reputation = artifacts.require('Reputation');$/;"	f
+module.exports	migrations/8_shuriken.js	/^var Shuriken = artifacts.require('Shuriken');$/;"	f
 module.exports	node_modules/ansi-regex/index.js	/^'use strict';$/;"	f
 module.exports	node_modules/concat-map/index.js	/^module.exports = function (xs, fn) {$/;"	f
 module.exports	node_modules/core-js/build/index.js	/^  temp = require('temp');$/;"	f

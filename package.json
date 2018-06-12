@@ -23,9 +23,11 @@
   },
   "homepage": "https://github.com/cryptonomous/handshake#readme",
   "dependencies": {
-    "dotenv": "^4.0.0",
-    "web3": "github:ethereum/web3.js",
+    "babel-polyfill": "^6.23.0",
     "babel-register": "^6.26.0",
-    "babel-polyfill": "^6.23.0"
-  }
+    "dotenv": "^4.0.0",
+    "openzeppelin-solidity": "1.10.0",
+    "web3": "github:ethereum/web3.js"
+  },
+  "devDependencies": {}
 }

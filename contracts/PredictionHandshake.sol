@@ -228,12 +228,22 @@ contract PredictionHandshake {
                 require(m.state == 1);
                 require(now < m.closingTime);
 
-                uint takerStake = msg.value;
-                uint takerPayout = (takerStake * takerOdds) / ODDS_1;
-
-                uint makerStake = takerPayout - takerStake; 
-                uint makerPayout = (makerStake * makerOdds) / ODDS_1;
                 uint makerSide = 3 - side;
+
+                uint takerStake = msg.value;
+                uint makerStake = m.open[maker][makerSide].stake;
+
+                uint takerPayout = (takerStake * takerOdds) / ODDS_1;
+                uint makerPayout = (makerStake * makerOdds) / ODDS_1;
+
+
+                if (takerPayout < makerPayout) {
+                        makerStake = takerPayout - takerStake;
+                        makerPayout = takerPayout;
+                } else {
+                        takerStake = makerPayout - makerStake;
+                        takerPayout = makerPayout;
+                }
 
                 // check if the odds matching is valid
                 require(takerOdds * ODDS_1 >= makerOdds * (takerOdds - ODDS_1));
@@ -246,7 +256,7 @@ contract PredictionHandshake {
                 // remove maker's order from open (could be partial)
                 m.open[maker][makerSide].odds[makerOdds] -= makerStake;
                 m.open[maker][makerSide].stake -= makerStake;
-                m.open[maker][makerSide].payout -= makerPayout;
+                m.open[maker][makerSide].payout -= makerStake * makerOdds;
 
                 // add maker's order to matched
                 m.matched[maker][makerSide].odds[makerOdds] += makerStake;
@@ -288,7 +298,8 @@ contract PredictionHandshake {
                 amt += m.open[msg.sender][1].stake; 
                 amt += m.open[msg.sender][2].stake;
 
-                require(amt > 0);
+                require(amt - marketComm > 0);
+                require(marketComm - networkComm > 0);
 
                 // wipe data
                 m.matched[msg.sender][m.outcome].payout = 0;
@@ -356,7 +367,11 @@ contract PredictionHandshake {
                 Market storage m = markets[hid]; 
                 require(m.state == 2);
                 require(!m.resolved);
+
+                // TODO: mark the msg.sender already reported
+ 
                 m.disputeStake += m.matched[msg.sender][m.outcome].stake;
+                m.disputeStake += m.matched[msg.sender][3-m.outcome].stake;
 
                 // if dispute stakes > 5% of the total stakes
                 if (100 * m.disputeStake > DISPUTE_THRESHOLD * m.totalStake) {
