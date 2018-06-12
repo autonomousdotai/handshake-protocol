@@ -2357,6 +2357,7 @@ _inherits3	node_modules/babel-core/lib/transformation/file/index.js	/^var _inher
 _inherits3	node_modules/babel-core/lib/transformation/plugin-pass.js	/^var _inherits3 = _interopRequireDefault(_inherits2);$/;"	v
 _inherits3	node_modules/babel-core/lib/transformation/plugin.js	/^var _inherits3 = _interopRequireDefault(_inherits2);$/;"	v
 _inherits3	node_modules/babel-generator/lib/index.js	/^var _inherits3 = _interopRequireDefault(_inherits2);$/;"	v
+_init	contracts/PredictionHandshake.sol	/^        function _init($/;"	f
 _interfaceish	node_modules/babel-generator/lib/generators/flow.js	/^function _interfaceish(node) {$/;"	c
 _interopRequireDefault	node_modules/babel-code-frame/lib/index.js	/^function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }$/;"	f
 _interopRequireDefault	node_modules/babel-core/lib/api/node.js	/^function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }$/;"	f
@@ -2700,6 +2701,7 @@ _setPrototypeOf	node_modules/babel-runtime/helpers/inherits.js	/^var _setPrototy
 _setPrototypeOf2	node_modules/babel-runtime/helpers/inherits.js	/^var _setPrototypeOf2 = _interopRequireDefault(_setPrototypeOf);$/;"	v
 _shadowFunctions	node_modules/babel-core/lib/transformation/file/index.js	/^var _shadowFunctions = require("..\/internal-plugins\/shadow-functions");$/;"	v
 _shadowFunctions2	node_modules/babel-core/lib/transformation/file/index.js	/^var _shadowFunctions2 = _interopRequireDefault(_shadowFunctions);$/;"	v
+_shake	contracts/PredictionHandshake.sol	/^        function _shake($/;"	f
 _shouldIgnore	node_modules/babel-core/lib/util.js	/^function _shouldIgnore(pattern, filename) {$/;"	f
 _sl	node_modules/crypto-js/crypto-js.js	/^	    var _sl = WordArray.create([$/;"	v
 _slash	node_modules/babel-core/lib/transformation/file/options/parsers.js	/^var _slash = require("slash");$/;"	v
@@ -4876,7 +4878,7 @@ disapprove	contracts/Reputation.sol	/^        function disapprove(address a) pub
 displayName	node_modules/web3/lib/web3/event.js	/^SolidityEvent.prototype.displayName = function () {$/;"	m	class:SolidityEvent
 displayName	node_modules/web3/lib/web3/function.js	/^SolidityFunction.prototype.displayName = function () {$/;"	m	class:SolidityFunction
 displayTransfer	node_modules/web3/example/icap.html	/^    function displayTransfer(text) {$/;"	f
-dispute	contracts/PredictionHandshake.sol	/^        function dispute(uint hid, bytes32 offchain) public {$/;"	f
+dispute	contracts/PredictionHandshake.sol	/^        function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {$/;"	f
 dissoc	node_modules/lodash/fp/_mapping.js	/^  'contains': 'includes',$/;"	p	class:exports.aliasToReal
 dissocPath	node_modules/lodash/fp/_mapping.js	/^  'dissoc': 'unset',$/;"	p	class:exports.aliasToReal
 divide	node_modules/babylon/lib/index.js	/^  ouml: "\\xF6",$/;"	p	class:XHTMLEntities
@@ -6084,7 +6086,7 @@ init	contracts/BasicHandshake.sol	/^    function init(address acceptor, bytes32 
 init	contracts/ExchangeHandshake.sol	/^    function init($/;"	f
 init	contracts/GroupHandshake.sol	/^    function init(bytes32[] acceptors, bytes32 offchain) public {$/;"	f
 init	contracts/PayableHandshake.sol	/^    function init($/;"	f
-init	contracts/PredictionHandshake.sol	/^        function init(uint hid, uint side, uint odds, bytes32 offchain) public payable {$/;"	f
+init	contracts/PredictionHandshake.sol	/^        function init($/;"	f
 init	node_modules/babel-core/lib/transformation/file/options/option-manager.js	/^  OptionManager.prototype.init = function init() {$/;"	m	class:OptionManager
 init	node_modules/babel-core/lib/transformation/plugin.js	/^  Plugin.prototype.init = function init(loc, i) {$/;"	m	class:Plugin
 init	node_modules/babel-traverse/lib/scope/index.js	/^  Scope.prototype.init = function init() {$/;"	m	class:Scope
@@ -6103,6 +6105,7 @@ initCloneObject	node_modules/lodash/_initCloneObject.js	/^function initCloneObje
 initCloneObject	node_modules/lodash/lodash.js	/^    function initCloneObject(object) {$/;"	f
 initCrowdsale	contracts/CrowdsaleHandshake.sol	/^    function initCrowdsale(uint goal, uint saletime, uint deadline, bytes32 offchain) public {$/;"	f
 initOptions	node_modules/babel-core/lib/transformation/file/index.js	/^  File.prototype.initOptions = function initOptions(opts) {$/;"	m	class:File
+initTestDrive	contracts/PredictionHandshake.sol	/^        function initTestDrive($/;"	f
 initial	node_modules/lodash/initial.js	/^function initial(array) {$/;"	f
 initial	node_modules/lodash/lodash.js	/^    function initial(array) {$/;"	f
 initializeContract	node_modules/web3/example/signature-verifier.js	/^function initializeContract(){$/;"	f
@@ -8109,7 +8112,7 @@ require.extensions	node_modules/babel-register/lib/node.js	/^  var old = oldHand
 require.extensions	node_modules/json5/lib/require.js	/^var JSON5 = require('.\/json5');$/;"	f
 reset	node_modules/web3/lib/web3.js	/^Web3.prototype.reset = function (keepIsSyncing) {$/;"	m	class:Web3
 reset	node_modules/web3/lib/web3/requestmanager.js	/^RequestManager.prototype.reset = function (keepIsSyncing) {$/;"	m	class:RequestManager
-resolve	contracts/PredictionHandshake.sol	/^        function resolve(uint hid, uint outcome, bytes32 offchain) public {$/;"	f
+resolve	contracts/PredictionHandshake.sol	/^        function resolve(uint hid, uint outcome, bytes32 offchain) public onlyRoot(hid) {$/;"	f
 resolve	node_modules/babel-traverse/lib/path/introspection.js	/^function resolve(dangerous, resolved) {$/;"	f
 resolveCall	node_modules/babel-traverse/lib/path/inference/inferers.js	/^function resolveCall(callee) {$/;"	f
 resolveFromPossibleNames	node_modules/babel-core/lib/helpers/resolve-from-possible-names.js	/^function resolveFromPossibleNames(possibleNames, dirname) {$/;"	f
@@ -8357,6 +8360,7 @@ shake	contracts/ExchangeHandshake.sol	/^    function shake(uint hid, bytes32 off
 shake	contracts/GroupHandshake.sol	/^    function shake(uint hid, bytes32 acceptor, bytes32 offchain) public {$/;"	f
 shake	contracts/PayableHandshake.sol	/^    function shake(uint hid, bytes32 offchain) public payable {$/;"	f
 shake	contracts/PredictionHandshake.sol	/^        function shake($/;"	f
+shakeTestDrive	contracts/PredictionHandshake.sol	/^        function shakeTestDrive($/;"	f
 shallowEqual	node_modules/babel-types/lib/index.js	/^function shallowEqual(actual, expected) {$/;"	f
 shannon	node_modules/web3/lib/utils/utils.js	/^    'Gwei':         '1000000000',$/;"	p	class:unitMap
 shareCommentsWithSiblings	node_modules/babel-traverse/lib/path/comments.js	/^function shareCommentsWithSiblings() {$/;"	f

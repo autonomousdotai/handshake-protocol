@@ -35,6 +35,8 @@ contract PredictionHandshake {
 
                 mapping(address => mapping(uint => Order)) open; // address => side => order
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
+
+                mapping(address => uint) testDrive; // address => # of test drive
         }
 
         struct Order {
@@ -46,6 +48,8 @@ contract PredictionHandshake {
         uint public NETWORK_FEE = 20; // 20%
         uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
         uint public DISPUTE_THRESHOLD = 5; // 5%
+        uint public TESTDRIVE = 3; // test drive 3 times 
+        uint public TESTDRIVE_AMT = 1 ether / 1000; // each test drive is 0.0001 eth
 
         Market[] public markets;
         address public root;
@@ -85,18 +89,59 @@ contract PredictionHandshake {
         event __init(uint hid, bytes32 offchain);
         event __test__init(uint stake, uint payout);
 
+
         // market maker
-        function init(uint hid, uint side, uint odds, bytes32 offchain) public payable {
+        function init(
+                uint hid, 
+                uint side, 
+                uint odds, 
+                bytes32 offchain
+        ) 
+                public 
+                payable 
+        {
+                _init(hid, side, odds, msg.sender, offchain);
+        }
+
+
+        // market maker. only called by root.  
+        function initTestDrive(
+                uint hid, 
+                uint side, 
+                uint odds, 
+                address maker, 
+                bytes32 offchain
+        ) 
+                public
+                payable
+                onlyRoot(hid)
+        {
+                Market storage m = markets[hid];
+                require(m.testDrive[maker] < 3);
+                m.testDrive[maker]++;
+                _init(hid, side, odds, maker, offchain);
+        }
+
+        // market maker. only called by root.  
+        function _init(
+                uint hid, 
+                uint side, 
+                uint odds, 
+                address maker, 
+                bytes32 offchain
+        ) 
+                private 
+        {
                 Market storage m = markets[hid];
 
                 require(now < m.closingTime);
                 require(m.state == 1);
 
-                m.open[msg.sender][side].stake += msg.value;
-                m.open[msg.sender][side].odds[odds] += msg.value;
-                m.open[msg.sender][side].payout += ((odds * msg.value) / ODDS_1);
+                m.open[maker][side].stake += msg.value;
+                m.open[maker][side].odds[odds] += msg.value;
+                m.open[maker][side].payout += ((odds * msg.value) / ODDS_1);
                 emit __init(hid, offchain);
-                emit __test__init(m.open[msg.sender][side].stake, m.open[msg.sender][side].payout);
+                emit __test__init(m.open[maker][side].stake, m.open[maker][side].payout);
         }
 
 
@@ -136,6 +181,7 @@ contract PredictionHandshake {
         event __test__shake__maker__matched(uint stake, uint payout);
         event __test__shake__maker__open(uint stake, uint payout);
 
+
         // market taker
         function shake(
                 uint hid, 
@@ -148,6 +194,40 @@ contract PredictionHandshake {
                 public 
                 payable 
         {
+                _shake(hid, side, msg.sender, takerOdds, maker, makerOdds, offchain);
+        }
+
+
+        function shakeTestDrive(
+                uint hid, 
+                uint side, 
+                address taker,
+                uint takerOdds, 
+                address maker, 
+                uint makerOdds, 
+                bytes32 offchain
+        ) 
+                public 
+                payable 
+        {
+                Market storage m = markets[hid];
+                require(m.testDrive[taker] < 3);
+                m.testDrive[taker]++;
+                _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
+        }
+
+
+        function _shake(
+                uint hid, 
+                uint side, 
+                address taker,
+                uint takerOdds, 
+                address maker, 
+                uint makerOdds, 
+                bytes32 offchain
+        ) 
+                private 
+        {
                 require(maker != 0);
                 require(takerOdds >= ODDS_1);
                 require(makerOdds >= ODDS_1);
@@ -157,7 +237,6 @@ contract PredictionHandshake {
                 require(m.state == 1);
                 require(now < m.closingTime);
 
-                address taker = msg.sender;
                 uint takerStake = msg.value;
                 uint takerPayout = (takerStake * takerOdds) / ODDS_1;
 
@@ -282,7 +361,7 @@ contract PredictionHandshake {
         event __dispute(uint hid, bytes32 offchain);
 
         // dispute outcome
-        function dispute(uint hid, bytes32 offchain) public {
+        function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
                 require(m.state == 2);
                 require(!m.resolved);
@@ -298,8 +377,7 @@ contract PredictionHandshake {
 
         event __resolve(uint hid, bytes32 offchain);
 
-        function resolve(uint hid, uint outcome, bytes32 offchain) public {
-                require(msg.sender == root);
+        function resolve(uint hid, uint outcome, bytes32 offchain) public onlyRoot(hid) {
                 Market storage m = markets[hid]; 
                 require(m.state == 3);
                 m.resolved = true;
@@ -314,6 +392,12 @@ contract PredictionHandshake {
                         markets[hid].matched[msg.sender][2].stake > 0 || 
                         markets[hid].open[msg.sender][1].stake > 0 || 
                         markets[hid].open[msg.sender][2].stake > 0);
+                _;
+        }
+
+
+        modifier onlyRoot(uint uid) {
+                require(msg.sender == root);
                 _;
         }
 }
