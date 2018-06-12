@@ -2,6 +2,13 @@ pragma solidity ^0.4.24;
 
 contract ExchangeShop {
 
+    address owner;
+
+    constructor() public {
+        owner = msg.sender;
+    }
+    uint fee = 0;// 0%
+
     enum S { Inited, Shaked, Rejected, Cancelled,Done }
 
     struct Exchange {
@@ -12,6 +19,7 @@ contract ExchangeShop {
     }
 
     Exchange[] public ex;
+    event __setFee(uint fee);
 
     event __initByShopOwner(uint hid, address shopOwner, uint value,bytes32 offchain);
     event __closeByShopOwner(uint hid, bytes32 offchain);
@@ -37,11 +45,37 @@ contract ExchangeShop {
         _;
     }
 
+
+    //success if sender is shopOwner or customer
+    modifier onlyShopOwnerOrCustomer(uint hid) {
+        require(msg.sender == ex[hid].shopOwner || msg.sender == ex[hid].customer);
+        _;
+    }
+
+    //success if sender is owner
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
     modifier atState(S _s, uint hid) {
         require(_s == ex[hid].state);
         _;
     }
 
+    /**
+        * @dev Initiate exchange fee by owner
+        * @param f exchange fee
+        */
+    function setFee(
+        uint f
+    )
+        public
+        onlyOwner()
+    {
+        fee = f;
+        emit __setFee(fee);
+    }
     /**
     * @dev Initiate handshake by shopOwner
     * @param value funds required for this handshake
@@ -78,8 +112,11 @@ contract ExchangeShop {
     {
         require(customer != 0x0 && amount > 0);
         Exchange storage p = ex[hid];
-        require(p.escrow >= amount);
-        p.escrow -= amount;
+        uint f = (amount * fee) / 1000;
+        uint t = amount + f;
+        require(p.escrow >= t);
+        p.escrow -= t;
+        owner.transfer(f);
         p.customer.transfer(amount);
         if (p.escrow == 0) p.state = S.Done;
         emit __releasePartialFund(hid,customer, amount, offchainP, offchainC);
@@ -115,7 +152,7 @@ contract ExchangeShop {
 
     //coinOwner cancel the handshake
     function cancel(uint hid, bytes32 offchain) public
-        onlyShopOwner(hid)
+        onlyShopOwnerOrCustomer(hid)
         atState(S.Inited, hid)
     {
         Exchange storage p = ex[hid];
@@ -141,7 +178,12 @@ contract ExchangeShop {
         atState(S.Shaked, hid)
     {
         Exchange storage p = ex[hid];
-        p.shopOwner.transfer(p.escrow);
+        require(p.escrow > 0);
+
+        uint f = (p.escrow * fee) / 1000;
+
+        p.shopOwner.transfer(p.escrow-f);
+        owner.transfer(f);
         p.escrow = 0;
         p.state = S.Done;
         emit __finish(hid, offchain);
@@ -150,11 +192,10 @@ contract ExchangeShop {
 
     //CashOwner reject the transaction
     function reject(uint hid, bytes32 offchain) public
+        onlyShopOwnerOrCustomer(hid)
         atState(S.Shaked, hid)
     {
         Exchange storage p = ex[hid];
-        require(msg.sender == p.shopOwner
-                ||  msg.sender == p.customer);
         p.state = S.Rejected;
         p.customer.transfer(p.escrow);
         emit __reject(hid, offchain);

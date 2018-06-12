@@ -30,7 +30,7 @@ contract("ExchangeHandshake", (accounts) => {
 
 
     const zeroValue = web3.toWei(0)
-
+    const fee = 10 //1%
     let hs;
 
     before(async () => {
@@ -43,6 +43,12 @@ contract("ExchangeHandshake", (accounts) => {
     let offchain2 = 11
 
     describe('at shop owner create the offer', () => {
+        it('should set exchange fee successful', async () => {
+
+            tx1 = await hs.setFee(fee, { from: root })
+            fee1 = await oc(tx1, "__setFee", "fee")
+            eq(Number(fee1), fee)
+        })
         it('should transfer coin successful', async () => {
 
             tx1 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner1, value: serviceValue })
@@ -57,7 +63,7 @@ contract("ExchangeHandshake", (accounts) => {
             tx1 = await hs.getBalance(hid1, { from: shopOwner1})
             console.log(Number(tx1))
 
-            eq(Number(tx1), Number(serviceValue)-Number(amount1))
+            eq(Number(tx1), Number(serviceValue)-Number(amount1)-Number(amount1)*fee/1000)
 
         })
 
@@ -89,11 +95,12 @@ contract("ExchangeHandshake", (accounts) => {
             tx1 = await hs.getBalance(hid1, { from: shopOwner1})
             console.log(Number(tx1))
 
-            eq(Number(tx1), Number(serviceValue)-Number(amount1)*2)
+            eq(Number(tx1), Number(serviceValue)-Number(amount1)*2-2*(Number(amount1)*fee/1000))
 
         })
 
         it('should change stage to done when transfer all coin in escrow', async () => {
+            tx1 = await hs.setFee(0, { from: root })
 
             tx1 = await hs.initByShopOwner(serviceValue, offchain, { from: shopOwner3, value: serviceValue })
 
@@ -177,6 +184,13 @@ contract("ExchangeHandshake", (accounts) => {
     })
 
     describe('at customer create the offer', () => {
+        it('should set exchange fee successful', async () => {
+
+            tx1 = await hs.setFee(fee, { from: root })
+            fee1 = await oc(tx1, "__setFee", "fee")
+            eq(Number(fee1), fee)
+        })
+
         it('should init & shake successful', async () => {
 
             tx1 = await hs.initByCustomer(shopOwner1, serviceValue, offchain, { from: customer1, value: serviceValue })
@@ -205,7 +219,7 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(hid1), Number(finishHid1))
 
             let bla1= u.balance(shopOwner1)
-            eq(Number(blb1)+ Number(serviceValue), Number(bla1))
+            eq(Number(blb1)+ Number(serviceValue)-Number(serviceValue)*fee/1000, Number(bla1))
 
         })
 
