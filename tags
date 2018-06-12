@@ -5597,7 +5597,6 @@ getAst	node_modules/babel-template/lib/index.js	/^    _getAst = function getAst(
 getAst	node_modules/babel-template/lib/index.js	/^  var _getAst = function getAst() {$/;"	f	function:exports.default
 getAttachmentParentForPath	node_modules/babel-traverse/lib/path/lib/hoister.js	/^  PathHoister.prototype.getAttachmentParentForPath = function getAttachmentParentForPath(path) {$/;"	m	class:PathHoister
 getAttachmentPath	node_modules/babel-traverse/lib/path/lib/hoister.js	/^  PathHoister.prototype.getAttachmentPath = function getAttachmentPath() {$/;"	m	class:PathHoister
-getBalanceTestDrive	contracts/PredictionHandshake.sol	/^        function getBalanceTestDrive(address adr) public view returns (uint) {$/;"	f
 getBinding	node_modules/babel-traverse/lib/scope/index.js	/^  Scope.prototype.getBinding = function getBinding(name) {$/;"	m	class:Scope
 getBindingIdentifier	node_modules/babel-traverse/lib/scope/index.js	/^  Scope.prototype.getBindingIdentifier = function getBindingIdentifier(name) {$/;"	m	class:Scope
 getBindingIdentifierPaths	node_modules/babel-traverse/lib/path/family.js	/^function getBindingIdentifierPaths() {$/;"	f

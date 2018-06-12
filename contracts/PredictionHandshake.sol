@@ -48,9 +48,8 @@ contract PredictionHandshake {
         uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
         uint public DISPUTE_THRESHOLD = 5; // 5%
 
-        mapping(address => uint) testDrive; // address => # of test drive
-        uint public TESTDRIVE = 3; // test drive 3 times 
-        uint public TESTDRIVE_AMT = 1 ether / 1000; // each test drive is 0.0001 eth
+        mapping(address => uint) testDrive; // address => test drive amount so far
+        uint public TESTDRIVE_AMT = 1 ether * 3 / 1000; // 0.0003, should cover 3 times
 
         Market[] public markets;
         address public root;
@@ -117,9 +116,8 @@ contract PredictionHandshake {
                 payable
                 onlyRoot(hid)
         {
-                require(testDrive[maker] < TESTDRIVE);
-                require(msg.value <= TESTDRIVE_AMT);
-                testDrive[maker]++;
+                require(testDrive[maker] + msg.value <= TESTDRIVE_AMT);
+                testDrive[maker] += msg.value;
                 _init(hid, side, odds, maker, offchain);
         }
 
@@ -211,9 +209,8 @@ contract PredictionHandshake {
                 public 
                 payable 
         {
-                require(testDrive[taker] < TESTDRIVE);
-                require(msg.value <= TESTDRIVE_AMT);
-                testDrive[taker]++;
+                require(testDrive[taker] + msg.value <= TESTDRIVE_AMT);
+                testDrive[taker] += msg.value;
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
 
@@ -385,11 +382,6 @@ contract PredictionHandshake {
                 m.outcome = outcome;
                 m.state = outcome == 0? 1: 2;
                 emit __resolve(hid, offchain);
-        }
-
-
-        function getBalanceTestDrive(address adr) public view returns (uint) {
-                return (TESTDRIVE - testDrive[adr]) * TESTDRIVE_AMT;
         }
 
 
