@@ -115,7 +115,7 @@ contract PredictionHandshake {
                 _init(hid, side, odds, maker, offchain);
         }
 
-        // market maker. only called by root.  
+
         function _init(
                 uint hid, 
                 uint side, 
@@ -232,7 +232,6 @@ contract PredictionHandshake {
 
                 uint takerPayout = (takerStake * takerOdds) / ODDS_1;
                 uint makerPayout = (makerStake * makerOdds) / ODDS_1;
-
 
                 if (takerPayout < makerPayout) {
                         makerStake = takerPayout - takerStake;
