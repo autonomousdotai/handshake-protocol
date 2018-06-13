@@ -117,7 +117,7 @@ contract ExchangeShop {
         require(p.escrow >= t);
         p.escrow -= t;
         owner.transfer(f);
-        p.customer.transfer(amount);
+        customer.transfer(amount);
         if (p.escrow == 0) p.state = S.Done;
         emit __releasePartialFund(hid,customer, amount, offchainP, offchainC);
     }

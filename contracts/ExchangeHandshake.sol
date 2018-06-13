@@ -109,18 +109,17 @@ contract ExchangeHandshake {
     function initByCoinOwner(
         address exchanger,
         address adrFeeRefund,
-        uint value,
         bytes32 offchain
     )
         public
         payable
     {
-        require(msg.value >= value);
+        require(msg.value >= 0);
         Exchange memory p;
         p.coinOwner = msg.sender;
         p.exchanger = exchanger;
         p.adrFeeRefund = adrFeeRefund;
-        p.value = value;
+        p.value = msg.value;
         p.fee = fee;
         p.feeRefund = feeRefund;
         p.state = S.Inited;
@@ -146,7 +145,6 @@ contract ExchangeHandshake {
 
         require(msg.sender == ex[hid].coinOwner || msg.sender == ex[hid].cashOwner);
         ex[hid].state = S.Shaked;
-
         emit __shake(hid, msg.value, offchain);
 
     }
@@ -172,7 +170,7 @@ contract ExchangeHandshake {
        p.adrFeeRefund.transfer(fr);
        msg.sender.transfer(p.value - f - fr);
 
-       emit __withdraw(hid,p.value, offchain);
+        emit __withdraw(hid,p.value, offchain);
     }
 
     //CashOwner reject the transaction
