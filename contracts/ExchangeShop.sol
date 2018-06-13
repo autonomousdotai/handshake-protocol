@@ -78,22 +78,21 @@ contract ExchangeShop {
     }
     /**
     * @dev Initiate handshake by shopOwner
-    * @param value funds required for this handshake
     * @param offchain record ID in offchain backend database
     */
     function initByShopOwner(
-        uint value,
         bytes32 offchain
     )
         public
         payable
     {
+        require(msg.value > 0);
         Exchange memory p;
         p.shopOwner = msg.sender;
-        p.escrow = value;
+        p.escrow = msg.value;
         p.state = S.Inited;
         ex.push(p);
-        emit __initByShopOwner(ex.length - 1, msg.sender, value, offchain);
+        emit __initByShopOwner(ex.length - 1, msg.sender, msg.value, offchain);
     }
 
     //CashOwner close the transaction after init
@@ -134,20 +133,19 @@ contract ExchangeShop {
     */
     function initByCustomer(
         address shopOwner,
-        uint value,
         bytes32 offchain
     )
         public
         payable
     {
-        require(msg.value >= value);
+        require(msg.value > 0);
         Exchange memory p;
         p.customer = msg.sender;
         p.shopOwner = shopOwner;
-        p.escrow = value;
+        p.escrow = msg.value;
         p.state = S.Inited;
         ex.push(p);
-        emit __initByCustomer(ex.length - 1, msg.sender,shopOwner,value, offchain);
+        emit __initByCustomer(ex.length - 1, msg.sender,shopOwner,msg.value, offchain);
     }
 
 
