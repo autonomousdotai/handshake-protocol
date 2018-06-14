@@ -8,7 +8,7 @@ contract Shuriken is StandardToken {
 
         string public constant name = "Shuriken";
         string public constant symbol = "SHURI";
-        uint8 public constant decimals = 18;
+        uint public constant decimals = 18;
 
         constructor() public {
                 totalSupply_ = INITIAL_SUPPLY * (10 ** decimals);
