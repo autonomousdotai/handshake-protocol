@@ -5,9 +5,11 @@ import 'openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 contract Shuriken is StandardToken {
 
         uint public INITIAL_SUPPLY = 27000000;
+        string public constant name = "SHURI";
+        uint8 public constant decimals = 18;
 
         constructor() public {
-                totalSupply_ = INITIAL_SUPPLY * (10 ** 18);
+                totalSupply_ = INITIAL_SUPPLY * (10 ** decimals);
                 balances[msg.sender] = totalSupply_;
         }
 }
