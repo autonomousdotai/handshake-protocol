@@ -7,7 +7,7 @@ contract Shuriken is StandardToken {
         uint public INITIAL_SUPPLY = 27000000;
 
         constructor() public {
-                totalSupply_ = INITIAL_SUPPLY;
+                totalSupply_ = INITIAL_SUPPLY * (10 ** 18));
                 balances[msg.sender] = totalSupply_;
         }
 }
