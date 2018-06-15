@@ -29,8 +29,10 @@ contract PredictionHandshake {
 
                 uint state;
                 uint outcome;
-                uint totalStake;
-                uint disputeStake;
+
+                uint totalOpenStake;
+                uint totalMatchedStake;
+                uint disputeMatchedStake;
                 bool resolved;
 
                 mapping(address => mapping(uint => Order)) open; // address => side => order
@@ -44,13 +46,22 @@ contract PredictionHandshake {
                 mapping(uint => uint) odds; // odds => pool size
         }
 
+        struct Trial {
+                uint hid;
+                uint side;
+                uint odds;
+                uint amt;
+        }
+
         uint public NETWORK_FEE = 20; // 20%
         uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
         uint public DISPUTE_THRESHOLD = 5; // 5%
+        uint public EXPIRATION = 30 days; 
 
         Market[] public markets;
         address public root;
 
+        mapping(address => Trial) trial;
 
         constructor() public {
                 root = msg.sender;
@@ -110,8 +121,14 @@ contract PredictionHandshake {
         ) 
                 public
                 payable
-                onlyRoot(hid)
+                onlyRoot
         {
+                require(trial[maker].amt == 0);
+                trial[maker].hid = hid;
+                trial[maker].side = side;
+                trial[maker].odds = odds;
+                trial[maker].amt = msg.value;
+
                 _init(hid, side, odds, maker, offchain);
         }
 
@@ -132,6 +149,8 @@ contract PredictionHandshake {
 
                 m.open[maker][side].stake += msg.value;
                 m.open[maker][side].odds[odds] += msg.value;
+                m.totalOpenStake += msg.value;
+
                 emit __init(hid, offchain);
                 emit __test__init(m.open[maker][side].stake);
         }
@@ -154,11 +173,17 @@ contract PredictionHandshake {
                 Market storage m = markets[hid];
 
                 require(m.state == 1);
-                require(m.open[msg.sender][side].stake >= stake);
-                require(m.open[msg.sender][side].odds[odds] >= stake);
+
+                uint trialAmt; 
+                if (trial[msg.sender].hid == hid && trial[msg.sender].side == side && trial[msg.sender].odds == odds)
+                        trialAmt = trial[msg.sender].amt;
+
+                require(m.open[msg.sender][side].stake - trialAmt >= stake);
+                require(m.open[msg.sender][side].odds[odds] - trialAmt >= stake);
 
                 m.open[msg.sender][side].stake -= stake;
                 m.open[msg.sender][side].odds[odds] -= stake;
+                m.totalOpenStake -= stake;
 
                 msg.sender.transfer(stake);
 
@@ -201,6 +226,12 @@ contract PredictionHandshake {
                 public 
                 payable 
         {
+                require(trial[msg.sender].amt == 0);
+                trial[msg.sender].hid = hid;
+                trial[msg.sender].side = side;
+                trial[msg.sender].odds = takerOdds;
+                trial[msg.sender].amt = msg.value;
+
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
 
@@ -251,19 +282,19 @@ contract PredictionHandshake {
                 // remove maker's order from open (could be partial)
                 m.open[maker][makerSide].odds[makerOdds] -= makerStake;
                 m.open[maker][makerSide].stake -= makerStake;
+                m.totalOpenStake -=  makerStake;
 
                 // add maker's order to matched
                 m.matched[maker][makerSide].odds[makerOdds] += makerStake;
                 m.matched[maker][makerSide].stake += makerStake;
                 m.matched[maker][makerSide].payout += makerPayout;
+                m.totalMatchedStake += makerStake;
 
                 // add taker's order to matched
                 m.matched[taker][side].odds[takerOdds] += takerStake;
                 m.matched[taker][side].stake += takerStake;
                 m.matched[taker][side].payout += takerPayout;
-
-                // TODO: add both takerStake and makerStake?
-                m.totalStake += takerStake + makerStake;
+                m.totalMatchedStake += takerStake;
 
                 emit __shake(hid, offchain);
 
@@ -287,6 +318,7 @@ contract PredictionHandshake {
                 // calc network commission, market commission and winnings
                 uint marketComm = (m.matched[msg.sender][m.outcome].payout * m.fee) / 100;
                 uint networkComm = (marketComm * NETWORK_FEE) / 100;
+
                 uint amt = m.matched[msg.sender][m.outcome].payout;
 
                 amt += m.open[msg.sender][1].stake; 
@@ -295,10 +327,18 @@ contract PredictionHandshake {
                 require(amt - marketComm > 0);
                 require(marketComm - networkComm > 0);
 
+                // update totals
+                m.totalOpenStake -= m.open[msg.sender][1].stake;
+                m.totalOpenStake -= m.open[msg.sender][2].stake;
+                m.totalMatchedStake -= m.matched[msg.sender][1].stake;
+                m.totalMatchedStake -= m.matched[msg.sender][2].stake;
+
                 // wipe data
-                m.matched[msg.sender][m.outcome].payout = 0;
                 m.open[msg.sender][1].stake = 0; 
                 m.open[msg.sender][2].stake = 0;
+                m.matched[msg.sender][1].stake = 0; 
+                m.matched[msg.sender][2].stake = 0;
+                m.matched[msg.sender][m.outcome].payout = 0;
 
                 msg.sender.transfer(amt - marketComm);
                 m.creator.transfer(marketComm - networkComm);
@@ -314,6 +354,7 @@ contract PredictionHandshake {
 
         // refund stakes when market closes (if there is no outcome)
         function refund(uint hid, bytes32 offchain) public onlyPredictor(hid) {
+
                 Market storage m = markets[hid]; 
 
                 require(m.state == 1);
@@ -366,11 +407,11 @@ contract PredictionHandshake {
                 require(!m.disputed[msg.sender]);
                 m.disputed[msg.sender] = true;
 
-                m.disputeStake += m.matched[msg.sender][1].stake;
-                m.disputeStake += m.matched[msg.sender][2].stake;
+                m.disputeMatchedStake += m.matched[msg.sender][1].stake;
+                m.disputeMatchedStake += m.matched[msg.sender][2].stake;
 
                 // if dispute stakes > 5% of the total stakes
-                if (100 * m.disputeStake > DISPUTE_THRESHOLD * m.totalStake) {
+                if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * m.totalMatchedStake) {
                         m.state = 3;
                 }
                 emit __dispute(hid, offchain);
@@ -379,13 +420,32 @@ contract PredictionHandshake {
 
         event __resolve(uint hid, bytes32 offchain);
 
-        function resolve(uint hid, uint outcome, bytes32 offchain) public onlyRoot(hid) {
+        function resolve(uint hid, uint outcome, bytes32 offchain) public onlyRoot {
                 Market storage m = markets[hid]; 
                 require(m.state == 3);
                 m.resolved = true;
                 m.outcome = outcome;
                 m.state = outcome == 0? 1: 2;
                 emit __resolve(hid, offchain);
+        }
+
+
+        event __shutdownMarket(uint hid, bytes32 offchain);
+
+        function shutdownMarket(uint hid, bytes32 offchain) public onlyRoot {
+                require(now > m.disputeTime + EXPIRATION);
+                Market storage m = markets[hid];
+                msg.sender.transfer(m.totalOpenStake + m.totalMatchedStake);
+                emit __shutdownMarket(hid, offchain);
+        }
+
+
+        // TODO: remove this function after 3 months once the system is stable
+        event __shutdownAllMarkets(bytes32 offchain);
+
+        function shutdownAllMarkets(bytes32 offchain) public onlyRoot {
+                msg.sender.transfer(address(this).balance);
+                emit __shutdownAllMarkets(offchain);
         }
 
 
@@ -398,7 +458,7 @@ contract PredictionHandshake {
         }
 
 
-        modifier onlyRoot(uint uid) {
+        modifier onlyRoot() {
                 require(msg.sender == root);
                 _;
         }

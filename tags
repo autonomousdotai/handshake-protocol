@@ -1904,6 +1904,8 @@ __shake	contracts/ExchangeHandshake.sol	/^    event __shake(uint hid, bytes32 of
 __shake	contracts/GroupHandshake.sol	/^    event __shake(uint hid, S state, bytes32 offchain);$/;"	e
 __shake	contracts/PayableHandshake.sol	/^    event __shake(uint hid, bytes32 offchain);$/;"	e
 __shake	contracts/PredictionHandshake.sol	/^        event __shake(uint hid, bytes32 offchain);$/;"	e
+__shutdownAllMarkets	contracts/PredictionHandshake.sol	/^        event __shutdownAllMarkets(bytes32 offchain);$/;"	e
+__shutdownMarket	contracts/PredictionHandshake.sol	/^        event __shutdownMarket(uint hid, bytes32 offchain);$/;"	e
 __stop	contracts/CrowdsaleHandshake.sol	/^    event __stop(uint hid, S state, bytes32 offchain);$/;"	e
 __test__collect	contracts/PredictionHandshake.sol	/^        event __test__collect(uint network, uint market, uint trader);$/;"	e
 __test__init	contracts/PredictionHandshake.sol	/^        event __test__init(uint stake);$/;"	e
@@ -2908,6 +2910,7 @@ addValidator	contracts/GroupHandshake.sol	/^    function addValidator(uint hid, 
 additionalPettyCash	contracts/CrowdsaleHandshake.sol	/^    function additionalPettyCash(uint hid) public view returns (uint) {$/;"	f
 address	node_modules/web3/lib/web3/iban.js	/^Iban.prototype.address = function () {$/;"	m	class:Iban
 aelig	node_modules/babylon/lib/index.js	/^  aring: "\\xE5",$/;"	p	class:XHTMLEntities
+after	contracts/PredictionHandshake.sol	/^        \/\/ TODO: remove this function after 3 months once the system is stable$/;"	f
 after	node_modules/lodash/after.js	/^function after(n, func) {$/;"	f
 after	node_modules/lodash/function.js	/^module.exports = {$/;"	p	class:module.exports
 after	node_modules/lodash/lodash.js	/^    function after(n, func) {$/;"	f
@@ -8115,7 +8118,7 @@ require.extensions	node_modules/babel-register/lib/node.js	/^  var old = oldHand
 require.extensions	node_modules/json5/lib/require.js	/^var JSON5 = require('.\/json5');$/;"	f
 reset	node_modules/web3/lib/web3.js	/^Web3.prototype.reset = function (keepIsSyncing) {$/;"	m	class:Web3
 reset	node_modules/web3/lib/web3/requestmanager.js	/^RequestManager.prototype.reset = function (keepIsSyncing) {$/;"	m	class:RequestManager
-resolve	contracts/PredictionHandshake.sol	/^        function resolve(uint hid, uint outcome, bytes32 offchain) public onlyRoot(hid) {$/;"	f
+resolve	contracts/PredictionHandshake.sol	/^        function resolve(uint hid, uint outcome, bytes32 offchain) public onlyRoot {$/;"	f
 resolve	node_modules/babel-traverse/lib/path/introspection.js	/^function resolve(dangerous, resolved) {$/;"	f
 resolveCall	node_modules/babel-traverse/lib/path/inference/inferers.js	/^function resolveCall(callee) {$/;"	f
 resolveFromPossibleNames	node_modules/babel-core/lib/helpers/resolve-from-possible-names.js	/^function resolveFromPossibleNames(possibleNames, dirname) {$/;"	f
@@ -8392,6 +8395,8 @@ shuffle	node_modules/lodash/shuffle.js	/^function shuffle(collection) {$/;"	f
 shuffleSelf	node_modules/lodash/_baseShuffle.js	/^var shuffleSelf = require('.\/_shuffleSelf'),$/;"	v
 shuffleSelf	node_modules/lodash/_shuffleSelf.js	/^function shuffleSelf(array, size) {$/;"	f
 shuffleSelf	node_modules/lodash/lodash.js	/^    function shuffleSelf(array, size) {$/;"	f
+shutdownAllMarkets	contracts/PredictionHandshake.sol	/^        function shutdownAllMarkets(bytes32 offchain) public onlyRoot {$/;"	f
+shutdownMarket	contracts/PredictionHandshake.sol	/^        function shutdownMarket(uint hid, bytes32 offchain) public onlyRoot {$/;"	f
 shy	node_modules/babylon/lib/index.js	/^  not: "\\xAC",$/;"	p	class:XHTMLEntities
 sigContractAddress	node_modules/web3/example/signature-verifier.js	/^var sigContractAddress= ""; $/;"	v
 sigContractInstance	node_modules/web3/example/signature-verifier.js	/^var sigContractInstance = null;$/;"	v
@@ -8566,6 +8571,7 @@ struct Market	contracts/PredictionHandshake.sol	/^        struct Market {$/;"	v
 struct Order	contracts/PredictionHandshake.sol	/^        struct Order {$/;"	v
 struct Payable	contracts/PayableHandshake.sol	/^    struct Payable {$/;"	v
 struct Payer	contracts/CrowdsaleHandshake.sol	/^    struct Payer {$/;"	v
+struct Trial	contracts/PredictionHandshake.sol	/^        struct Trial {$/;"	v
 stubArray	node_modules/lodash/lodash.js	/^    function stubArray() {$/;"	f
 stubArray	node_modules/lodash/stubArray.js	/^function stubArray() {$/;"	f
 stubFalse	node_modules/lodash/lodash.js	/^    function stubFalse() {$/;"	f
