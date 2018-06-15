@@ -172,8 +172,6 @@ contract PredictionHandshake {
         {
                 Market storage m = markets[hid];
 
-                require(m.state == 1);
-
                 uint trialAmt; 
                 if (trial[msg.sender].hid == hid && trial[msg.sender].side == side && trial[msg.sender].odds == odds)
                         trialAmt = trial[msg.sender].amt;
@@ -432,6 +430,7 @@ contract PredictionHandshake {
 
         event __shutdownMarket(uint hid, bytes32 offchain);
 
+        // TODO: remove this function after 3 months once the system is stable
         function shutdownMarket(uint hid, bytes32 offchain) public onlyRoot {
                 require(now > m.disputeTime + EXPIRATION);
                 Market storage m = markets[hid];
@@ -440,9 +439,9 @@ contract PredictionHandshake {
         }
 
 
-        // TODO: remove this function after 3 months once the system is stable
         event __shutdownAllMarkets(bytes32 offchain);
 
+        // TODO: remove this function after 3 months once the system is stable
         function shutdownAllMarkets(bytes32 offchain) public onlyRoot {
                 msg.sender.transfer(address(this).balance);
                 emit __shutdownAllMarkets(offchain);
