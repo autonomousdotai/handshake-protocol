@@ -306,39 +306,47 @@ contract PredictionHandshake {
         event __collect(uint hid, bytes32 offchain);
         event __test__collect(uint network, uint market, uint trader);
 
-        // collect payouts & outstanding stakes (if there is outcome)
         function collect(uint hid, bytes32 offchain) public onlyPredictor(hid) {
+                _collect(hid, msg.sender, offchain);
+        }
+
+        function collectTestDrive(uint hid, address winner, bytes32 offchain) public onlyRoot {
+                _collect(hid, winner, offchain);
+        }
+
+        // collect payouts & outstanding stakes (if there is outcome)
+        function _collect(uint hid, address winner, bytes32 offchain) private {
                 Market storage m = markets[hid]; 
 
                 require(m.state == 2);
                 require(now > m.disputeTime);
 
                 // calc network commission, market commission and winnings
-                uint marketComm = (m.matched[msg.sender][m.outcome].payout * m.fee) / 100;
+                uint marketComm = (m.matched[winner][m.outcome].payout * m.fee) / 100;
                 uint networkComm = (marketComm * NETWORK_FEE) / 100;
 
-                uint amt = m.matched[msg.sender][m.outcome].payout;
+                uint amt = m.matched[winner][m.outcome].payout;
 
-                amt += m.open[msg.sender][1].stake; 
-                amt += m.open[msg.sender][2].stake;
+                amt += m.open[winner][1].stake; 
+                amt += m.open[winner][2].stake;
 
                 require(amt - marketComm > 0);
                 require(marketComm - networkComm > 0);
 
                 // update totals
-                m.totalOpenStake -= m.open[msg.sender][1].stake;
-                m.totalOpenStake -= m.open[msg.sender][2].stake;
-                m.totalMatchedStake -= m.matched[msg.sender][1].stake;
-                m.totalMatchedStake -= m.matched[msg.sender][2].stake;
+                m.totalOpenStake -= m.open[winner][1].stake;
+                m.totalOpenStake -= m.open[winner][2].stake;
+                m.totalMatchedStake -= m.matched[winner][1].stake;
+                m.totalMatchedStake -= m.matched[winner][2].stake;
 
                 // wipe data
-                m.open[msg.sender][1].stake = 0; 
-                m.open[msg.sender][2].stake = 0;
-                m.matched[msg.sender][1].stake = 0; 
-                m.matched[msg.sender][2].stake = 0;
-                m.matched[msg.sender][m.outcome].payout = 0;
+                m.open[winner][1].stake = 0; 
+                m.open[winner][2].stake = 0;
+                m.matched[winner][1].stake = 0; 
+                m.matched[winner][2].stake = 0;
+                m.matched[winner][m.outcome].payout = 0;
 
-                msg.sender.transfer(amt - marketComm);
+                winner.transfer(amt - marketComm);
                 m.creator.transfer(marketComm - networkComm);
                 root.transfer(networkComm);
 

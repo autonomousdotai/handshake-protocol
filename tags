@@ -2102,6 +2102,7 @@ _cloneDeep2	node_modules/babel-register/lib/node.js	/^var _cloneDeep2 = _interop
 _cloneDeep2	node_modules/babel-template/lib/index.js	/^var _cloneDeep2 = _interopRequireDefault(_cloneDeep);$/;"	v
 _cloneDeepWith	node_modules/babel-core/lib/transformation/file/options/option-manager.js	/^var _cloneDeepWith = require("lodash\/cloneDeepWith");$/;"	v
 _cloneDeepWith2	node_modules/babel-core/lib/transformation/file/options/option-manager.js	/^var _cloneDeepWith2 = _interopRequireDefault(_cloneDeepWith);$/;"	v
+_collect	contracts/PredictionHandshake.sol	/^        function _collect(uint hid, address winner, bytes32 offchain) private {$/;"	f
 _config	node_modules/babel-core/lib/api/node.js	/^var _config = require("..\/transformation\/file\/options\/config");$/;"	v
 _config	node_modules/babel-core/lib/transformation/file/options/index.js	/^var _config = require(".\/config");$/;"	v
 _config2	node_modules/babel-core/lib/transformation/file/options/index.js	/^var _config2 = _interopRequireDefault(_config);$/;"	v
@@ -3916,6 +3917,7 @@ cof	node_modules/core-js/modules/es6.number.constructor.js	/^var cof = require('
 cof	node_modules/core-js/modules/es7.error.is-error.js	/^var cof = require('.\/_cof');$/;"	v
 coinbase	node_modules/web3/example/node-app.js	/^var coinbase = web3.eth.coinbase;$/;"	v
 collect	contracts/PredictionHandshake.sol	/^        function collect(uint hid, bytes32 offchain) public onlyPredictor(hid) {$/;"	f
+collectTestDrive	contracts/PredictionHandshake.sol	/^        function collectTestDrive(uint hid, address winner, bytes32 offchain) public onlyRoot {$/;"	f
 column	node_modules/babel-generator/lib/buffer.js	/^      line: 1,$/;"	p	class:Buffer._position
 column	node_modules/babel-generator/lib/buffer.js	/^      line: null,$/;"	p	class:Buffer._sourcePosition
 column	node_modules/source-map/lib/source-node.js	/^    line: 1,$/;"	p	class:SourceNode.var.generated
