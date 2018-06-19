@@ -49,8 +49,7 @@ contract PredictionHandshake {
         struct Trial {
                 uint hid;
                 uint side;
-                uint odds;
-                uint amt;
+                mapping(uint => uint) amt; // odds => amt
         }
 
         uint public NETWORK_FEE = 20; // 20%
@@ -123,11 +122,10 @@ contract PredictionHandshake {
                 payable
                 onlyRoot
         {
-                require(trial[maker].amt == 0);
+                //require(trial[maker].amt == 0);
                 trial[maker].hid = hid;
                 trial[maker].side = side;
-                trial[maker].odds = odds;
-                trial[maker].amt = msg.value;
+                trial[maker].amt[odds] += msg.value;
 
                 _init(hid, side, odds, maker, offchain);
         }
@@ -173,8 +171,8 @@ contract PredictionHandshake {
                 Market storage m = markets[hid];
 
                 uint trialAmt; 
-                if (trial[msg.sender].hid == hid && trial[msg.sender].side == side && trial[msg.sender].odds == odds)
-                        trialAmt = trial[msg.sender].amt;
+                if (trial[msg.sender].hid == hid && trial[msg.sender].side == side)
+                        trialAmt = trial[msg.sender].amt[odds];
 
                 require(m.open[msg.sender][side].stake - trialAmt >= stake);
                 require(m.open[msg.sender][side].odds[odds] - trialAmt >= stake);
@@ -223,12 +221,11 @@ contract PredictionHandshake {
         ) 
                 public 
                 payable 
+                onlyRoot
         {
-                require(trial[msg.sender].amt == 0);
                 trial[msg.sender].hid = hid;
                 trial[msg.sender].side = side;
-                trial[msg.sender].odds = takerOdds;
-                trial[msg.sender].amt = msg.value;
+                trial[msg.sender].amt[takerOdds] += msg.value;
 
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
