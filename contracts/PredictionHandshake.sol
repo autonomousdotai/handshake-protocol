@@ -122,7 +122,6 @@ contract PredictionHandshake {
                 payable
                 onlyRoot
         {
-                //require(trial[maker].amt == 0);
                 trial[maker].hid = hid;
                 trial[maker].side = side;
                 trial[maker].amt[odds] += msg.value;
