@@ -7,8 +7,7 @@ contract ExchangeHandshake {
      constructor() public {
         owner = msg.sender;
     }
-    uint fee = 5;
-    uint feeRefund = 5;
+    uint fee = 0;
 
     enum S { Inited, Shaked, Accepted, Rejected, Done, Cancelled }
 
@@ -16,16 +15,14 @@ contract ExchangeHandshake {
         address coinOwner;
         address cashOwner;
         address exchanger;
-        address adrFeeRefund;
         uint fee; //percentage
-        uint feeRefund;//percentage
         uint value;
         S state;
     }
 
     Exchange[] public ex;
 
-    event __setFee(uint fee, uint feeRefund);
+    event __setFee(uint fee);
     event __initByCoinOwner(uint hid, address coinOwner, bytes32 offchain);
     event __initByCashOwner(uint hid, address cashOwner, bytes32 offchain);
     event __shake(uint hid,uint amount, bytes32 offchain);
@@ -61,31 +58,26 @@ contract ExchangeHandshake {
      /**
         * @dev Initiate exchange fee by owner
         * @param f exchange fee
-        * @param fr %fee send back to initiator
         */
     function setFee(
-        uint f,
-        uint fr
+        uint f
     )
         public
         onlyOwner()
     {
         fee = f;
-        feeRefund = fr;
-        emit __setFee(fee, feeRefund);
+        emit __setFee(fee);
     }
 
 
     /**
     * @dev Initiate handshake by cashOwner
     * @param exchanger exchanger address
-    * @param adrFeeRefund adrFeeRefund address
     * @param value funds required for this handshake
     * @param offchain record ID in offchain backend database
     */
     function initByCashOwner(
         address exchanger,
-        address adrFeeRefund,
         uint value,
         bytes32 offchain
     )
@@ -94,10 +86,8 @@ contract ExchangeHandshake {
         Exchange memory p;
         p.cashOwner = msg.sender;
         p.exchanger = exchanger;
-        p.adrFeeRefund = adrFeeRefund;
         p.value = value;
         p.fee = fee;
-        p.feeRefund = feeRefund;
         p.state = S.Inited;
         ex.push(p);
         emit __initByCashOwner(ex.length - 1, msg.sender, offchain);
@@ -108,7 +98,6 @@ contract ExchangeHandshake {
     */
     function initByCoinOwner(
         address exchanger,
-        address adrFeeRefund,
         bytes32 offchain
     )
         public
@@ -118,10 +107,8 @@ contract ExchangeHandshake {
         Exchange memory p;
         p.coinOwner = msg.sender;
         p.exchanger = exchanger;
-        p.adrFeeRefund = adrFeeRefund;
         p.value = msg.value;
         p.fee = fee;
-        p.feeRefund = feeRefund;
         p.state = S.Inited;
         ex.push(p);
         emit __initByCoinOwner(ex.length - 1, msg.sender, offchain);
@@ -165,10 +152,9 @@ contract ExchangeHandshake {
        Exchange storage p = ex[hid];
        p.state = S.Done;
        uint f = (p.value * p.fee) / 1000;
-       uint fr = (p.value * p.feeRefund) / 1000;
        p.exchanger.transfer(f);
-       p.adrFeeRefund.transfer(fr);
-       msg.sender.transfer(p.value - f - fr);
+       msg.sender.transfer(p.value - f);
+       p.value = 0;
 
         emit __withdraw(hid,p.value, offchain);
     }
@@ -188,7 +174,7 @@ contract ExchangeHandshake {
                 || p.state == S.Shaked || p.state == S.Inited);
         p.state = S.Cancelled;
         msg.sender.transfer(p.value);
-
+        p.value = 0;
         emit __cancel(hid, offchain);
     }
 

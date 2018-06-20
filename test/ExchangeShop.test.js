@@ -53,7 +53,9 @@ contract("ExchangeHandshake", (accounts) => {
 
             tx1 = await hs.initByShopOwner(offchain, { from: shopOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByShopOwner", "hid")
-            tx1 = await hs.releasePartialFund(hid1,customer1,partialValue, offchain,offchain2, { from: shopOwner1})
+            let blb2= u.balance(customer1)
+
+            tx1 = await hs.releasePartialFund(hid1,customer1,-1, offchain,offchain2, { from: shopOwner1})
             let releaseHid1 = await oc(tx1, "__releasePartialFund", "hid")
             let amount1 = await oc(tx1, "__releasePartialFund", "amount")
 
@@ -64,6 +66,10 @@ contract("ExchangeHandshake", (accounts) => {
             console.log(Number(tx1))
 
             eq(Number(tx1), Number(serviceValue)-Number(amount1)-Number(amount1)*fee/1000)
+
+            let bla2= u.balance(customer1)
+
+            eq(Number(blb2) + Number(partialValue), Number(bla2))
 
         })
 
