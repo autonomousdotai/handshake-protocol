@@ -21,8 +21,6 @@ contract("ExchangeHandshake", (accounts) => {
     const coinOwner2 = accounts[2]
     const cashOwner1 = accounts[3]
     const cashOwner2 = accounts[4]
-    const exchanger1 = accounts[5]
-    const exchanger2 = accounts[6]
 
     let serviceValue = web3.toWei(0.5)
     const fee = 5
@@ -57,40 +55,17 @@ contract("ExchangeHandshake", (accounts) => {
 
     describe('at beginning time', () => {
         it('should making Handshake when coinOwner call initByPayer', async () => {
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
+            tx1 = await hs.initByCoinOwner(offchain, { from: coinOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCoinOwner", "hid")
 
             eq(Number(hid1), 0)
             as(!isNaN(hid1))
         })
 
-        it('should init a Handshake when cashOwner call init', async () => {
-            tx2 = await hs.initByCashOwner(exchanger2, serviceValue,offchain, { from: cashOwner2 })
-            hid2 = await oc(tx2, "__initByCashOwner", "hid")
-            eq(Number(hid2), 1)
-            as(!isNaN(hid2))
-        })
-
         it('should making Handshake when cashOwner call shake to an inited Handshake', async () => {
             tx1 = await hs.shake(hid1, offchain, { from: cashOwner1})
             shakeHid1 = await oc(tx1, "__shake", "hid")
             eq(Number(hid1), Number(shakeHid1))
-        })
-
-        it('should making Handshake when coinOwner call shake to an inited Handshake', async () => {
-            let amount = Number(serviceValue) + (Number(serviceValue)*(fee))/1000
-            console.log("-----------------" + serviceValue);
-            tx2 = await hs.shake(hid2, offchain, { from: coinOwner2, value: amount })
-            shakeHid2 = await oc(tx2, "__shake", "hid")
-            let amountLog = await oc(tx2, "__shake", "amount")
-            console.log(Number(amountLog));
-            eq(Number(hid2), Number(shakeHid2))
-        })
-
-
-        it('should return incremental hid', async () => {
-            eq(Number(hid1), 0)
-            eq(Number(hid2), 1)
         })
 
         it("should be not able to accept by cashOwner", async () => {
@@ -103,123 +78,28 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(hid1), Number(acceptHid1))
         })
 
-        it("should be not able to withdraw by coinOwner", async () => {
-            await  u.assertRevert(hs.withdraw(hid1, offchain, { from: coinOwner1 }))
-        })
-
-        it("should be able to withdraw by cashOwner", async () => {
-
-            tx1 = await hs.withdraw(hid1, offchain, { from: cashOwner1 })
-            withdrawHid1 = await oc(tx1, "__withdraw", "hid")
-            eq(Number(hid1), Number(withdrawHid1))
-
-            let value = await oc(tx1, "__withdraw", "value")
-            let fee = await oc(tx1, "__withdraw", "fee")
-            //console.log("value:" + Number(value) + "fee:" + Number(fee) + "fee"+ Number(fee))
-
-
-        })
-
-
-
-        it("should be able to accept only by coinOwner for handshake 2", async () => {
-            tx2 = await hs.accept(hid2, offchain, { from: coinOwner2 })
-            acceptHid2 = await oc(tx2, "__accept", "hid")
-            eq(Number(hid2), Number(acceptHid2))
-
-            tx2 = await hs.withdraw(hid2, offchain, { from: cashOwner2 })
-
-        })
-
-        it("should be not able to withdraw by coinOwner for handshake 2", async () => {
-            await  u.assertRevert(hs.withdraw(hid2, offchain, { from: coinOwner2 }))
-        })
-
-        it("should be received fee & fee refund after withdraw with init by CashOwner", async () => {
+        it("should be received fee & fee refund after withdraw with init by CoinOwner", async () => {
             let blb2= u.balance(coinOwner1);
-            let blb3= u.balance(exchanger1);
 
-            let amount = Number(serviceValue) + (Number(serviceValue)*(5+5))/1000
-            tx1 = await hs.initByCashOwner(exchanger1, serviceValue,offchain, { from: cashOwner1 })
-            console.log("amount:" + Number(amount));
-            hid1 = await oc(tx1, "__initByCashOwner", "hid")
-
-            tx1 = await hs.shake(hid1, offchain, { from: coinOwner1, value: amount})
-            let amountLog = await oc(tx1, "__shake", "amount")
-            console.log("amountL" + Number(amountLog));
-
-            tx1 = await hs.accept(hid1, offchain, { from: coinOwner1 })
-            tx1 = await hs.withdraw(hid1, offchain, { from: cashOwner1 })
-
-            withdrawHid1 = await oc(tx1, "__withdraw", "hid")
-            //let value = await oc(tx1, "__withdraw", "value")
-            //let fee = await oc(tx1, "__withdraw", "fee")
-
-
-            let bla2= u.balance(coinOwner1);
-            let bla3= u.balance(exchanger1);
-
-            //eq(Number((serviceValue*fee)/1000), Number(bla3)-Number(blb3))
-
-
-        })
-
-        it("should be received fee & fee refund after withdraw with init by CashOwner", async () => {
-            let blb2= u.balance(coinOwner1);
-            let blb3= u.balance(exchanger1);
-
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
+            tx1 = await hs.initByCoinOwner(offchain, { from: coinOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCoinOwner", "hid")
 
             tx1 = await hs.shake(hid1, offchain, { from: cashOwner1})
             //console.log("amountL" + Number(amountLog));
 
             tx1 = await hs.accept(hid1, offchain, { from: coinOwner1 })
-            tx1 = await hs.withdraw(hid1, offchain, { from: cashOwner1 })
-
-            withdrawHid1 = await oc(tx1, "__withdraw", "hid")
             //let value = await oc(tx1, "__withdraw", "value")
             //let fee = await oc(tx1, "__withdraw", "fee")
 
-
             let bla2= u.balance(coinOwner1);
-            let bla3= u.balance(exchanger1);
 
             //eq(Number((serviceValue*fee)/1000), Number(bla3)-Number(blb3))
 
 
         })
 
-        it("should be able to reject by cashOwner", async () => {
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
-            hid1 = await oc(tx1, "__initByCoinOwner", "hid")
-            tx1 = await hs.shake(hid1, offchain, { from: cashOwner1})
-            shakeHid1 = await oc(tx1, "__shake", "hid")
-
-            tx1 = await hs.reject(hid1, offchain, { from: cashOwner1 })
-
-            rejectHid1 = await oc(tx1, "__reject", "hid")
-            eq(Number(hid1), Number(rejectHid1))
-
-        })
-
-
-        it("should be able to cancel by coinOwner at reject stage", async () => {
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
-            hid1 = await oc(tx1, "__initByCoinOwner", "hid")
-            tx1 = await hs.shake(hid1, offchain, { from: cashOwner1})
-            shakeHid1 = await oc(tx1, "__shake", "hid")
-            await hs.reject(hid1, offchain, { from: cashOwner1 })
-
-            tx1 = await hs.cancel(hid1, offchain, { from: coinOwner1 })
-
-            cancelHid1 = await oc(tx1, "__cancel", "hid")
-            eq(Number(hid1), Number(cancelHid1))
-
-        })
-
         it("should be able to cancel by coinOwner at shaked stage", async () => {
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
+            tx1 = await hs.initByCoinOwner(offchain, { from: coinOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCoinOwner", "hid")
             tx1 = await hs.shake(hid1, offchain, { from: cashOwner1})
             shakeHid1 = await oc(tx1, "__shake", "hid")
@@ -230,7 +110,7 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(hid1), Number(cancelHid1))
 
             tx1 = await hs.getState(hid1)
-            eq(5, Number(tx1)) //5:cancel stage
+            eq(3, Number(tx1)) //3:cancel stage
 
         })
 
@@ -238,7 +118,7 @@ contract("ExchangeHandshake", (accounts) => {
             let blb2= u.balance(coinOwner1)
             //console.log(Number(blb2))
 
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
+            tx1 = await hs.initByCoinOwner(offchain, { from: coinOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCoinOwner", "hid")
 
             //console.log(Number(u.balance(coinOwner1)))
@@ -261,7 +141,7 @@ contract("ExchangeHandshake", (accounts) => {
 
         it("should able to can cancel after init", async () => {
             let blb2= u.balance(coinOwner1)
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
+            tx1 = await hs.initByCoinOwner(offchain, { from: coinOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCoinOwner", "hid")
 
             tx1 = await hs.cancel(hid1, offchain, { from: coinOwner1 })
@@ -274,20 +154,10 @@ contract("ExchangeHandshake", (accounts) => {
         })
 
 
-        it("should able to can close after init", async () => {
-            tx1 = await hs.initByCashOwner(exchanger1, serviceValue,offchain, { from: cashOwner1 })
-            hid1 = await oc(tx1, "__initByCashOwner", "hid")
-
-            tx1 = await hs.closeByCashOwner(hid1, offchain, { from: cashOwner1 })
-
-            cancelHid2 = await oc(tx1, "__closeByCashOwner", "hid")
-            eq(Number(hid1), Number(cancelHid2))
-        })
-
         it("should get low gas fee", async () => {
             let blb1= u.balance(coinOwner1)
             //console.log(Number(blb2))
-            tx1 = await hs.initByCoinOwner(exchanger1, offchain, { from: coinOwner1, value: serviceValue })
+            tx1 = await hs.initByCoinOwner(offchain, { from: coinOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCoinOwner", "hid")
             let bla1= u.balance(coinOwner1)
             console.log(Number(blb1)-Number(bla1)-serviceValue)
@@ -302,24 +172,6 @@ contract("ExchangeHandshake", (accounts) => {
 
         })
 
-        it("should get low gas fee", async () => {
-            let blb1= u.balance(cashOwner1)
-            //console.log(Number(blb2))
-            tx1 = await hs.initByCashOwner(exchanger1, serviceValue, offchain, { from: cashOwner1 })
-            hid1 = await oc(tx1, "__initByCashOwner", "hid")
-            let bla1= u.balance(cashOwner1)
-            //console.log(Number(blb1)-Number(bla1))
-
-            blb2= u.balance(coinOwner1)
-
-            tx1 = await hs.shake(hid1, offchain, { from: coinOwner1, value: serviceValue })
-            shakeHid1 = await oc(tx1, "__shake", "hid")
-
-            bla2= u.balance(coinOwner1)
-            //console.log(Number(blb2)-Number(bla2)-serviceValue)
-            //console.log(serviceValue);
-
-        })
 
 
     })
