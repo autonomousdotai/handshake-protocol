@@ -39,6 +39,35 @@ contract PredictionHandshake {
                 mapping(address => mapping(uint => Order)) matched; // address => side => order
                 mapping(address => bool) disputed;
         }
+        
+        
+        function getOpenData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
+        (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        ) 
+        {
+            Market storage m = markets[hid];
+            Order storage o = m.matched[user][side];
+            // return (stake, payout, odds, pool size)
+            return (o.stake, o.payout, userOdds, o.odds[userOdds]);
+        }
+        
+        function getMatchedData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
+        (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        ) 
+        {
+            Market storage m = markets[hid];
+            Order storage o = m.open[user][side];
+            // return (stake, payout, odds, pool size)
+            return (o.stake, o.payout, userOdds, o.odds[userOdds]);
+        }
 
         struct Order {
                 uint stake;
@@ -59,6 +88,7 @@ contract PredictionHandshake {
 
         Market[] public markets;
         address public root;
+        uint256 public total;
 
         mapping(address => Trial) trial;
 
@@ -128,6 +158,78 @@ contract PredictionHandshake {
 
                 _init(hid, side, odds, maker, offchain);
         }
+        
+        event __uninitTestDrive(uint hid, bytes32 offchain);
+        
+        function uninitForTrial
+        (
+            uint hid,
+            uint side,
+            uint odds,
+            address maker,
+            uint value,
+            bytes32 offchain
+        )
+            public
+            onlyRoot
+        {
+            // make sure trial is existed and currently betting.
+            require(trial[maker].hid == hid && trial[maker].side == side && trial[maker].amt[odds] > 0);
+            trial[maker].amt[odds] -= value;
+            
+            Market storage m = markets[hid];
+            
+            require(m.open[maker][side].stake >= value);
+            require(m.open[maker][side].odds[odds]  >= value);
+            require(m.totalOpenStake  >= value);
+
+            m.open[maker][side].stake -= value;
+            m.open[maker][side].odds[odds] -= value;
+            m.totalOpenStake -= value;
+
+            require(total + value >= total);
+            total += value;
+            
+            emit __uninitTestDrive(hid, offchain);
+        }
+        
+        event __withdrawTrial(uint256 amount);
+
+        function withdrawTrial() public onlyRoot {
+            root.transfer(total);
+            __withdrawTrial(total);
+            total = 0;
+        }
+        
+        // market maker cancels order
+        function uninit(
+                uint hid, 
+                uint side, 
+                uint stake, 
+                uint odds, 
+                bytes32 offchain
+        ) 
+                public 
+                onlyPredictor(hid) 
+        {
+                Market storage m = markets[hid];
+
+                uint trialAmt; 
+                if (trial[msg.sender].hid == hid && trial[msg.sender].side == side)
+                    trialAmt = trial[msg.sender].amt[odds];
+
+                require(m.open[msg.sender][side].stake - trialAmt >= stake);
+                require(m.open[msg.sender][side].odds[odds] - trialAmt >= stake);
+
+                m.open[msg.sender][side].stake -= stake;
+                m.open[msg.sender][side].odds[odds] -= stake;
+                m.totalOpenStake -= stake;
+
+                msg.sender.transfer(stake);
+
+                emit __uninit(hid, offchain);
+                emit __test__uninit(m.open[msg.sender][side].stake);
+        }
 
 
         function _init(
@@ -156,35 +258,7 @@ contract PredictionHandshake {
         event __uninit(uint hid, bytes32 offchain);
         event __test__uninit(uint stake);
 
-        // market maker cancels order
-        function uninit(
-                uint hid, 
-                uint side, 
-                uint stake, 
-                uint odds, 
-                bytes32 offchain
-        ) 
-                public 
-                onlyPredictor(hid) 
-        {
-                Market storage m = markets[hid];
-
-                uint trialAmt; 
-                if (trial[msg.sender].hid == hid && trial[msg.sender].side == side)
-                        trialAmt = trial[msg.sender].amt[odds];
-
-                require(m.open[msg.sender][side].stake - trialAmt >= stake);
-                require(m.open[msg.sender][side].odds[odds] - trialAmt >= stake);
-
-                m.open[msg.sender][side].stake -= stake;
-                m.open[msg.sender][side].odds[odds] -= stake;
-                m.totalOpenStake -= stake;
-
-                msg.sender.transfer(stake);
-
-                emit __uninit(hid, offchain);
-                emit __test__uninit(m.open[msg.sender][side].stake);
-        }
+        
 
 
         event __shake(uint hid, bytes32 offchain);
