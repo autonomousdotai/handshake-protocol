@@ -43,7 +43,7 @@ contract PredictionHandshake {
         struct Order {
                 uint stake;
                 uint payout;
-                mapping(uint => uint) odds; // odds => pool size 
+                mapping(uint => uint) odds; // odds => pool size
         }
 
         struct Trial {
