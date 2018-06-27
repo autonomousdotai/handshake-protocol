@@ -161,7 +161,7 @@ contract PredictionHandshake {
         
         event __uninitTestDrive(uint hid, bytes32 offchain);
         
-        function uninitForTrial
+        function uninitTestDrive
         (
             uint hid,
             uint side,
@@ -471,7 +471,7 @@ contract PredictionHandshake {
         }
 
 
-        event __dispute(uint hid, bytes32 offchain);
+        event __dispute(uint hid, uint state, bytes32 offchain);
 
         // dispute outcome
         function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
@@ -490,7 +490,7 @@ contract PredictionHandshake {
                 if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * m.totalMatchedStake) {
                         m.state = 3;
                 }
-                emit __dispute(hid, offchain);
+                emit __dispute(hid, m.state, offchain);
         }
 
 
