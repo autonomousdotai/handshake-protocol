@@ -41,7 +41,7 @@ contract PredictionHandshake {
         }
         
         
-        function getOpenData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
+        function getMatchedData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
         (
             uint256,
             uint256,
@@ -55,7 +55,7 @@ contract PredictionHandshake {
             return (o.stake, o.payout, userOdds, o.odds[userOdds]);
         }
         
-        function getMatchedData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
+        function getOpenData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
         (
             uint256,
             uint256,
@@ -197,7 +197,7 @@ contract PredictionHandshake {
 
         function withdrawTrial() public onlyRoot {
             root.transfer(total);
-            __withdrawTrial(total);
+            emit __withdrawTrial(total);
             total = 0;
         }
         
