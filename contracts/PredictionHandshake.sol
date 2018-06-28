@@ -463,6 +463,7 @@ contract PredictionHandshake {
         // report outcome
         function report(uint hid, uint outcome, bytes32 offchain) public {
                 Market storage m = markets[hid]; 
+                require(m.closingTime < now && now <= m.reportTime);
                 require(msg.sender == m.creator);
                 require(m.state == 1);
                 m.outcome = outcome;
@@ -477,6 +478,7 @@ contract PredictionHandshake {
         function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
                 Market storage m = markets[hid]; 
 
+                require(now <= m.disputeTime);
                 require(m.state == 2);
                 require(!m.resolved);
 
