@@ -400,8 +400,8 @@ contract PredictionHandshake {
                 amt += m.open[winner][1].stake; 
                 amt += m.open[winner][2].stake;
 
-                require(amt - marketComm > 0);
-                require(marketComm - networkComm > 0);
+                require(amt - marketComm >= 0);
+                require(marketComm - networkComm >= 0);
 
                 // update totals
                 m.totalOpenStake -= m.open[winner][1].stake;
@@ -463,7 +463,7 @@ contract PredictionHandshake {
         // report outcome
         function report(uint hid, uint outcome, bytes32 offchain) public {
                 Market storage m = markets[hid]; 
-                require(m.closingTime < now && now <= m.reportTime);
+                // require(m.closingTime < now && now <= m.reportTime);
                 require(msg.sender == m.creator);
                 require(m.state == 1);
                 m.outcome = outcome;
