@@ -159,8 +159,6 @@ contract PredictionHandshake {
                 _init(hid, side, odds, maker, offchain);
         }
         
-        event __uninitTestDrive(uint hid, bytes32 offchain);
-        
         function uninitTestDrive
         (
             uint hid,
@@ -173,24 +171,25 @@ contract PredictionHandshake {
             public
             onlyRoot
         {
-            // make sure trial is existed and currently betting.
-            require(trial[maker].hid == hid && trial[maker].side == side && trial[maker].amt[odds] > 0);
-            trial[maker].amt[odds] -= value;
-            
-            Market storage m = markets[hid];
-            
-            require(m.open[maker][side].stake >= value);
-            require(m.open[maker][side].odds[odds]  >= value);
-            require(m.totalOpenStake  >= value);
+                // make sure trial is existed and currently betting.
+                require(trial[maker].hid == hid && trial[maker].side == side && trial[maker].amt[odds] > 0);
+                trial[maker].amt[odds] -= value;
+                
+                Market storage m = markets[hid];
+                
+                require(m.open[maker][side].stake >= value);
+                require(m.open[maker][side].odds[odds] >= value);
+                require(m.totalOpenStake >= value);
 
-            m.open[maker][side].stake -= value;
-            m.open[maker][side].odds[odds] -= value;
-            m.totalOpenStake -= value;
+                m.open[maker][side].stake -= value;
+                m.open[maker][side].odds[odds] -= value;
+                m.totalOpenStake -= value;
 
-            require(total + value >= total);
-            total += value;
+                require(total + value >= total);
+                total += value;
             
-            emit __uninitTestDrive(hid, offchain);
+                emit __uninit(hid, offchain);
+                emit __test__uninit(m.open[msg.sender][side].stake);
         }
         
         event __withdrawTrial(uint256 amount);
