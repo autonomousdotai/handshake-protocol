@@ -358,4 +358,193 @@ contract("PredictionHandshake", (accounts) => {
 
         })
 
+        describe("uninit for trial", async() => {
+                it('create a brand new market', async() => {
+                        const i = {
+                            fee: 0,
+                            source: s2b("livescore.com"),
+                            closingWindow: 1000,
+                            reportWindow: 2000,
+                            disputeWindow: 3000,
+                            creator: creator1 
+                        }
+                        const o = {
+                            hid: 3
+                        }
+        
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                });
+
+                it('should be able to init test drive', async() => {
+                        const i = {
+                            hid: 3,
+                            side: SUPPORT,
+                            odds: 100,
+                            stake: web3.toWei(1, 'ether'),
+                            maker: maker3,
+                            creator: creator1
+                        }
+        
+                        const tx = await hs.initTestDrive(i.hid, i.side, i.odds, i.maker, OFFCHAIN, { from: root, value: i.stake })
+                        const trial = await hs.getOpenData(i.hid, i.side, i.maker, i.odds);
+        
+                        eq(web3.toWei(1, 'ether'), trial[0].toNumber())
+                        eq(web3.toWei(1, 'ether'), await oc(tx, "__test__init", "stake"))    
+                });
+
+                it('should be able to uninit for trial', async() => {
+                        const i = {
+                            hid: 3,
+                            side: SUPPORT,
+                            odds: 100,
+                            maker: maker3,
+                            value: web3.toWei(1, 'ether')
+                        }
+                      
+                        const tx = await hs.uninitTestDrive(i.hid, i.side, i.odds, i.maker, i.value, OFFCHAIN, { from: root })
+        
+                        const total = await hs.total()
+                        const trial = await hs.getOpenData(i.hid, i.side, i.maker, i.odds);
+        
+                        assert.equal(web3.toWei(1, 'ether'), total)
+                        assert.equal(0, trial[0].toNumber())
+                });
+
+                it('root is able to withdraw ether from trial total', async() => {
+                        const total = await hs.total()
+                        const rootBalanceBefore = await web3.eth.getBalance(root)
+        
+                        const tx = await hs.withdrawTrial({ from: root });
+                        const rootBalanceAfter = await web3.eth.getBalance(root)
+        
+                        const expected = (rootBalanceBefore.toNumber() + total.toNumber()) / 10**18
+        
+                        const realValue = rootBalanceAfter.toNumber() / 10**18
+        
+                        assert.equal(Math.floor(expected), Math.floor(realValue))
+        
+                        const totalAfter = await hs.total()
+        
+                        assert.equal(0, totalAfter.toNumber())
+                });
+        });
+
+        describe('dispute function', async() => {
+                it('create a market', async() => {
+                        const i = {
+                            fee: 0,
+                            source: s2b("livescore.com"),
+                            closingWindow: 10,
+                            reportWindow: 10,
+                            disputeWindow: 10,
+                            creator: creator1 
+                        }
+                        const o = {
+                            hid: 4
+                        }
+        
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+        
+                        assert.equal(o.hid, await oc(tx, "__createMarket", "hid"))
+                });
+
+                it("maker1 places an order", async () => {
+                        const i = {
+                            hid: 4,
+                            side: SUPPORT, 
+                            stake: web3.toWei(2, 'ether'),
+                            odds: 300,
+                            sender: maker1 
+                        }
+                        const o = {
+                            stake: i.stake,
+                            payout: i.stake * i.odds / 100
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                });
+
+                it("taker1 fills maker1's order", async() => {
+                        const i = {
+                            hid: 4,
+                            side: AGAINST,
+                            taker: taker1,
+                            takerOdds: 150,
+                            value: web3.toWei('4', 'ether'),
+                            maker: maker1,
+                            makerOdds: 300
+                        }
+                        const o = {
+                            match_taker_stake: i.value,
+                            match_taker_payout: i.value * i.takerOdds / 100,
+                            match_maker_stake: web3.toWei(2, 'ether'),
+                            match_maker_payout: web3.toWei(2, 'ether') * i.makerOdds / 100,
+                            open_maker_stake: web3.toWei(0)
+                        }
+                        const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, { from: i.taker, value: i.value });
+                        
+                        assert.equal(o.match_taker_stake, await oc(tx, "__test__shake__taker__matched", "stake"))
+                        assert.equal(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
+        
+                        assert.equal(o.match_maker_stake, await oc(tx, "__test__shake__maker__matched", "stake"))
+                        assert.equal(o.match_maker_payout, await oc(tx, "__test__shake__maker__matched", "payout"))
+        
+                        assert.equal(o.open_maker_stake, await oc(tx, "__test__shake__maker__open", "stake"))
+                });
+
+                it('creator reports an outcome on the order', async () => {
+                        const i = {
+                            hid: 4,
+                            creator: creator1,
+                            outcome: 2
+                        }
+
+                        const o = {
+                            outcome: 2
+                        }
+                
+                        await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator });
+        
+                        var marketState = await hs.markets(4, { from: root });
+        
+                        assert.equal(o.outcome, marketState[7].toNumber())
+                });
+
+                it('maker1 disputes the outcome', async () => {
+                        const i = {
+                            hid: 4
+                        }
+                
+                        const o = {
+                            totalDisputeStake: web3.toWei(2, 'ether')
+                        }
+
+                        const tx = await hs.dispute(i.hid, OFFCHAIN, { from: maker1 });
+        
+                        const marketState = await hs.markets(4, { from: root });
+        
+                        assert.equal(o.totalDisputeStake, marketState[10].toNumber())
+                });
+
+                it('root resolves the dispute', async() => {
+                        const i = {
+                            hid: 4,
+                            outcome: 1
+                        }
+
+                        const o = {
+                            state: 2,
+                            outcome: 1
+                        }
+        
+                        const tx = await hs.resolve(i.hid, i.outcome, OFFCHAIN, { from: root });
+                        const marketState = await hs.markets(4, { from: root });
+                        
+                        assert.equal(o.outcome, marketState[7].toNumber());
+                        assert.equal(o.state, marketState[6].toNumber());
+                });
+        });
+
 })
