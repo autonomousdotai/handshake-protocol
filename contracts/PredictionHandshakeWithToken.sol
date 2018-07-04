@@ -44,10 +44,6 @@ contract PredictionHandshakeWithToken {
                 mapping(address => bool) disputed;
         }
 
-        function getNow() public view returns (uint) {
-                return now;
-        }
-        
         function getOpenData(uint hid, address user, uint side) public onlyRoot view returns(uint, uint)  {
                 Market storage m = markets[hid];
                 Order storage o = m.open[user][side];
@@ -96,10 +92,14 @@ contract PredictionHandshakeWithToken {
             _;
         }
 
-        function approveNewToken(address _tokenAddr) public onlyRoot {
-                require(
-                        Token(_tokenAddr).approve(tokenRegistryAddress, 2**256-1)
-                );
+        function approveNewToken(address[] _tokenAddresses) public onlyRoot {
+                for(uint i = 0; i < _tokenAddresses.length; i++) {
+                        if (tokenRegistry.tokenIsExisted(_tokenAddresses[i]) == true) {
+                                require(
+                                        Token(_tokenAddresses[i]).approve(tokenRegistryAddress, 2**256-1)
+                                );
+                        } 
+                }
         }
 
 
@@ -292,7 +292,6 @@ contract PredictionHandshakeWithToken {
                 bytes32 offchain
         ) 
                 public 
- 
         {
                 _shake(hid, side, msg.sender, takerOdds, maker, makerOdds, amount, offchain);
         }
@@ -309,7 +308,6 @@ contract PredictionHandshakeWithToken {
                 bytes32 offchain
         ) 
                 public 
-                payable 
                 onlyRoot
         {
                 trial[msg.sender].hid = hid;
