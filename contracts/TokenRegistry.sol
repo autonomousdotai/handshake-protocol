@@ -27,7 +27,7 @@ contract TokenRegistry {
         owner = msg.sender;
     }
     
-    function addNewToken(address _tokenAddr, string _symbol, string _name, uint8 _decimals) public {
+    function addNewToken(address _tokenAddr, string _symbol, string _name, uint8 _decimals) public onlyOwner {
         TokenMetadata memory tokenData = TokenMetadata({
             tokenAddress: _tokenAddr,
             symbol: _symbol,
@@ -45,7 +45,7 @@ contract TokenRegistry {
         return Token(_tokenAddr).transferFrom(_from, _to, _amount);
     }
     
-    function removeToken(address _tokenAddr) public {
+    function removeToken(address _tokenAddr) public onlyOwner {
         require(tokenIsExisted(_tokenAddr));
         delete tokenMapping[_tokenAddr];
         for (uint i = 0; i < tokens.length; i++) {
