@@ -94,7 +94,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
         });
 
         it("handshake contract approves token registry contract to transfer token", async() => {
-            await hs.approveNewToken(token.address, { from: root });
+            await hs.approveNewToken([token.address], { from: root });
 
             const o = {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
