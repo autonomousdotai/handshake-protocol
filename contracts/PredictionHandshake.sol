@@ -451,7 +451,9 @@ contract PredictionHandshake {
                 m.open[msg.sender][1].stake = 0;
                 m.open[msg.sender][2].stake = 0;
 
-                msg.sender.transfer(amt);
+                if(!(trial[msg.sender].hid == hid)) {
+                        msg.sender.transfer(amt);
+                } 
 
                 emit __refund(hid, offchain);
                 emit __test__refund(amt);
