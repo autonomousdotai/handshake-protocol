@@ -465,7 +465,10 @@ contract PredictionHandshakeWithToken {
                 m.open[msg.sender][1].stake = 0;
                 m.open[msg.sender][2].stake = 0;
 
-                require(tokenRegistry.transferToken(m.token, address(this), msg.sender, amt));
+                if (!(trial[msg.sender].hid == hid)) {
+                        require(tokenRegistry.transferToken(m.token, address(this), msg.sender, amt));
+                }
+                
 
                 emit __refund(hid, offchain);
                 emit __test__refund(amt);
