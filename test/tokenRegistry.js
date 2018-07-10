@@ -1,8 +1,5 @@
-const Token0 = artifacts.require("Token0")
-const Token1 = artifacts.require("Token1")
-const Token2 = artifacts.require("Token2")
+const Shuriken = artifacts.require("Shuriken")
 const TokenRegistry = artifacts.require("TokenRegistry")
-
 
 const l = console.log
 const eq = assert.equal
@@ -33,20 +30,20 @@ contract("Token Registry", (accounts) => {
     const reporter1 = accounts[9]
 
     var token0, token1, token2, tokenRegistry;
-    var INITIAL_SUPPLY = 100000000;
+    var INITIAL_SUPPLY = 27000000;
 
         
     describe("root deploys contracts", () => {
         it("root deploys token 0", async() => {
             const i = {
-                decimals: 0
+                decimals: 18
             }
     
             const o = {
                 balance: INITIAL_SUPPLY * (10**i.decimals)
             }
     
-            token0 = await Token0.new({ from: root });
+            token0 = await Shuriken.new({ from: root });
             let rootBalance = await token0.balanceOf(root);
                 
             eq(o.balance, rootBalance.toNumber())
@@ -54,14 +51,14 @@ contract("Token Registry", (accounts) => {
     
         it("root deploys token 1", async() => {
             const i = {
-                decimals: 1
+                decimals: 18
             }
     
             const o = {
                 balance: INITIAL_SUPPLY * (10**i.decimals)
             }
     
-            token1 = await Token1.new({ from: root });
+            token1 = await Shuriken.new({ from: root });
             let rootBalance = await token1.balanceOf(root);
                 
             eq(o.balance, rootBalance.toNumber())
@@ -69,14 +66,14 @@ contract("Token Registry", (accounts) => {
     
         it("root deploys token 2", async() => {
             const i = {
-                decimals: 15
+                decimals: 18
             }
     
             const o = {
                 balance: INITIAL_SUPPLY * (10**i.decimals)
             }
     
-            token2 = await Token2.new({ from: root });
+            token2 = await Shuriken.new({ from: root });
             let rootBalance = await token2.balanceOf(root);
     
             eq(o.balance, rootBalance.toNumber())
@@ -99,9 +96,9 @@ contract("Token Registry", (accounts) => {
         it("non-root is not able to add token", async() => {
             const i = {
                 address: token0.address,
-                symbol: "TKN0",
-                name: "Token 0",
-                decimals: 0
+                symbol: "SHURI",
+                name: "Shuriken",
+                decimals: 18
             }
             await u.assertRevert(tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: maker1 })) 
         });
@@ -109,9 +106,9 @@ contract("Token Registry", (accounts) => {
         it("root adds token 0", async() => {
             const i = {
                 address: token0.address,
-                symbol: "TKN0",
-                name: "Token 0",
-                decimals: 0
+                symbol: "SHURI",
+                name: "Shuriken",
+                decimals: 18
             }
             var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: root }); 
 
@@ -124,9 +121,9 @@ contract("Token Registry", (accounts) => {
         it("root adds token 1", async() => {
             const i = {
                 address: token1.address,
-                symbol: "TKN1",
-                name: "Token 1",
-                decimals: 15
+                symbol: "SHURI",
+                name: "Shuriken",
+                decimals: 18
             }
             var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: root }); 
 
@@ -139,9 +136,9 @@ contract("Token Registry", (accounts) => {
         it("root adds token 2", async() => {
             const i = {
                 address: token2.address,
-                symbol: "TKN2",
-                name: "Token 2",
-                decimals: 15
+                symbol: "SHURI",
+                name: "Shuriken",
+                decimals: 18
             }
             var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: root }); 
 
@@ -156,9 +153,9 @@ contract("Token Registry", (accounts) => {
         it("root removes token 0", async() => {
             const i = {
                 address: token0.address,
-                symbol: "TKN0",
-                name: "Token 0",
-                decimals: 0
+                symbol: "SHURI",
+                name: "Shuriken",
+                decimals: 18
             }
             var tx = await tokenRegistry.removeToken(i.address);
 
@@ -204,15 +201,15 @@ contract("Token Registry", (accounts) => {
     describe("get balance", () => {
         it("get balance of token 0", async() => {
             const i = {
-                address: token0.address
+                address: token0.address,
+                decimals: await token0.decimals(),
             }
 
             const o = {
-                balance: INITIAL_SUPPLY
+                balance: INITIAL_SUPPLY * (10**i.decimals)
             }
             
             var tx = await tokenRegistry.getBalanceOf(i.address, root);
-
             eq(o.balance, tx.toNumber());
         });
     });
