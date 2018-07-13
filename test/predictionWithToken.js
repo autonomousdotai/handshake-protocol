@@ -632,7 +632,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
 
             var marketState = await hs.markets(4, { from: root });
 
-            assert.equal(o.outcome, marketState[8].toNumber())
+            eq(o.outcome, marketState[8].toNumber())
         });
 
         it('maker1 disputes the outcome', async () => {
@@ -648,7 +648,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
 
             const marketState = await hs.markets(4, { from: root });
 
-            assert.equal(o.totalDisputeStake.toNumber(), marketState[11].toNumber())
+            eq(o.totalDisputeStake.toNumber(), marketState[11].toNumber())
         });
 
         it('root resolves the dispute', async() => {
@@ -665,8 +665,8 @@ contract("PredictionHandshakeWithToken", (accounts) => {
             const tx = await hs.resolve(i.hid, i.outcome, OFFCHAIN, { from: root });
             const marketState = await hs.markets(4, { from: root });
             
-            assert.equal(o.outcome, marketState[8].toNumber());
-            assert.equal(o.state, marketState[7].toNumber());
+            eq(o.outcome, marketState[8].toNumber());
+            eq(o.state, marketState[7].toNumber());
         });
     });
 });
