@@ -6,7 +6,7 @@
 *
 * Note:
 *
-*       side: 0 (unknown), 1 (support), 2 (against)
+*       side: 0 (unknown), 1 (support), 2 (against), 3 (draw)
 *       role: 0 (unknown), 1 (maker), 2 (taker)
 *       state: 0 (unknown), 1 (created), 2 (reported), 3 (disputed)
 *       __test__* events will be removed prior to production deployment
@@ -219,8 +219,8 @@ contract PredictionHandshakeWithToken {
             Market storage m = markets[hid];
             
             require(m.open[maker][side].stake >= value);
-            require(m.open[maker][side].odds[odds]  >= value);
-            require(m.totalOpenStake  >= value);
+            require(m.open[maker][side].odds[odds] >= value);
+            require(m.totalOpenStake >= value);
 
             m.open[maker][side].stake -= value;
             m.open[maker][side].odds[odds] -= value;
@@ -276,10 +276,6 @@ contract PredictionHandshakeWithToken {
 
         
         event __shake(uint hid, bytes32 offchain);
-        event __test__shake__taker__matched(uint stake, uint payout);
-        event __test__shake__maker__matched(uint stake, uint payout);
-        event __test__shake__maker__open(uint stake);
-
 
         // market taker
         function shake(
@@ -381,9 +377,6 @@ contract PredictionHandshakeWithToken {
                 m.totalMatchedStake += takerStake;
 
                 emit __shake(hid, offchain);
-                // emit __test__shake__taker__matched(m.matched[taker][side].stake, m.matched[taker][side].payout);
-                // emit __test__shake__maker__matched(m.matched[maker][makerSide].stake, m.matched[maker][makerSide].payout);
-                // emit __test__shake__maker__open(m.open[maker][makerSide].stake);
         }
 
 
@@ -447,7 +440,7 @@ contract PredictionHandshakeWithToken {
 
                 Market storage m = markets[hid]; 
 
-                require(m.state == 1);
+                require(m.state == 1 || m.outcome == 3);
                 require(now > m.reportTime);
 
                 // calc refund amt
@@ -480,6 +473,7 @@ contract PredictionHandshakeWithToken {
         // report outcome
         function report(uint hid, uint outcome, bytes32 offchain) public {
                 Market storage m = markets[hid]; 
+                require(now <= m.reportTime);
                 require(msg.sender == m.creator);
                 require(m.state == 1);
                 m.outcome = outcome;
@@ -521,33 +515,6 @@ contract PredictionHandshakeWithToken {
                 m.outcome = outcome;
                 m.state = outcome == 0? 1: 2;
                 emit __resolve(hid, offchain);
-        }
-
-
-        event __shutdownMarket(uint hid, bytes32 offchain);
-
-        // TODO: remove this function after 3 months once the system is stable
-        function shutdownMarket(uint hid, bytes32 offchain) public onlyRoot {
-                require(now > m.disputeTime + EXPIRATION);
-                Market storage m = markets[hid];
-                require(tokenRegistry.transferToken(m.token, address(this), msg.sender, m.totalOpenStake + m.totalMatchedStake));
-                emit __shutdownMarket(hid, offchain);
-        }
-
-
-        event __shutdownAllMarkets(bytes32 offchain);
-
-        // TODO: remove this function after 3 months once the system is stable
-        function shutdownAllMarkets(bytes32 offchain, address[] _tokenAddressArray) public onlyRoot {
-                for (uint i = 0; i < _tokenAddressArray.length; i++) {
-                    require(tokenRegistry.transferToken(
-                        _tokenAddressArray[i],
-                        address(this),
-                        msg.sender,
-                        tokenRegistry.getBalanceOf(_tokenAddressArray[i], address(this))
-                    ));
-                }
-                emit __shutdownAllMarkets(offchain);
         }
 
 

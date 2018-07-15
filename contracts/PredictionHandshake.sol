@@ -6,7 +6,7 @@
 *
 * Note:
 *
-*       side: 0 (unknown), 1 (support), 2 (against)
+*       side: 0 (unknown), 1 (support), 2 (against), 3 (draw)
 *       role: 0 (unknown), 1 (maker), 2 (taker)
 *       state: 0 (unknown), 1 (created), 2 (reported), 3 (disputed)
 *       __test__* events will be removed prior to production deployment
@@ -432,7 +432,7 @@ contract PredictionHandshake {
 
                 Market storage m = markets[hid]; 
 
-                require(m.state == 1);
+                require(m.state == 1 || m.outcome == 3);
                 require(now > m.reportTime);
 
                 // calc refund amt
@@ -464,7 +464,7 @@ contract PredictionHandshake {
         // report outcome
         function report(uint hid, uint outcome, bytes32 offchain) public {
                 Market storage m = markets[hid]; 
-                // require(m.closingTime < now && now <= m.reportTime);
+                require(now <= m.reportTime);
                 require(msg.sender == m.creator);
                 require(m.state == 1);
                 m.outcome = outcome;

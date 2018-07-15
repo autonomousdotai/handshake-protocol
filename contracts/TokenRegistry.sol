@@ -4,7 +4,7 @@ import "./Token.sol";
 
 contract TokenRegistry {
     
-    event NewTokenAdded(address tokenAddress, string symbol, string name, uint8 decimals);
+    event NewTokenAdded(address tokenAddress, string symbol, string name, uint8 decimals, bytes32 offchain);
     event TokenDeleted(address tokenAddress);
     
     struct TokenMetadata {
@@ -27,7 +27,7 @@ contract TokenRegistry {
         owner = msg.sender;
     }
     
-    function addNewToken(address _tokenAddr, string _symbol, string _name, uint8 _decimals) public onlyOwner {
+    function addNewToken(address _tokenAddr, string _symbol, string _name, uint8 _decimals, bytes32 offchain) public onlyOwner {
         TokenMetadata memory tokenData = TokenMetadata({
             tokenAddress: _tokenAddr,
             symbol: _symbol,
@@ -38,7 +38,7 @@ contract TokenRegistry {
         tokenMapping[_tokenAddr] = tokenData;
         tokens.push(_tokenAddr);
         
-        emit NewTokenAdded(_tokenAddr, _symbol, _name, _decimals);
+        emit NewTokenAdded(_tokenAddr, _symbol, _name, _decimals, offchain);
     }
     
     function transferToken(address _tokenAddr, address _from, address _to, uint256 _amount) public returns(bool) {
