@@ -31,6 +31,7 @@ contract("Token Registry", (accounts) => {
 
     var token0, token1, token2, tokenRegistry;
     var INITIAL_SUPPLY = 27000000;
+    const OFFCHAIN = 'cryptosign_123';
 
         
     describe("root deploys contracts", () => {
@@ -100,7 +101,8 @@ contract("Token Registry", (accounts) => {
                 name: "Shuriken",
                 decimals: 18
             }
-            await u.assertRevert(tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: maker1 })) 
+
+            await u.assertRevert(tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: maker1 })) 
         });
 
         it("root adds token 0", async() => {
@@ -110,12 +112,13 @@ contract("Token Registry", (accounts) => {
                 name: "Shuriken",
                 decimals: 18
             }
-            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: root }); 
 
-            eq(i.address, await oc(tx, "NewTokenAdded", "tokenAddress"))
-            eq(i.symbol, await oc(tx, "NewTokenAdded", "symbol"))
-            eq(i.name, await oc(tx, "NewTokenAdded", "name"))
-            eq(i.decimals, await oc(tx, "NewTokenAdded", "decimals"))
+            const o = {
+                tid: 0
+            }
+
+            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: root }); 
+            eq(o.tid, await oc(tx, "__addNewToken", "tid"))
         });
 
         it("root adds token 1", async() => {
@@ -125,12 +128,13 @@ contract("Token Registry", (accounts) => {
                 name: "Shuriken",
                 decimals: 18
             }
-            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: root }); 
 
-            eq(i.address, await oc(tx, "NewTokenAdded", "tokenAddress"))
-            eq(i.symbol, await oc(tx, "NewTokenAdded", "symbol"))
-            eq(i.name, await oc(tx, "NewTokenAdded", "name"))
-            eq(i.decimals, await oc(tx, "NewTokenAdded", "decimals"))
+            const o = {
+                tid: 1
+            }
+
+            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: root }); 
+            eq(o.tid, await oc(tx, "__addNewToken", "tid"))
         });
 
         it("root adds token 2", async() => {
@@ -140,12 +144,13 @@ contract("Token Registry", (accounts) => {
                 name: "Shuriken",
                 decimals: 18
             }
-            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, { from: root }); 
+            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: root }); 
 
-            eq(i.address, await oc(tx, "NewTokenAdded", "tokenAddress"))
-            eq(i.symbol, await oc(tx, "NewTokenAdded", "symbol"))
-            eq(i.name, await oc(tx, "NewTokenAdded", "name"))
-            eq(i.decimals, await oc(tx, "NewTokenAdded", "decimals"))
+            const o = {
+                tid: 2
+            }
+
+            eq(o.tid, await oc(tx, "__addNewToken", "tid"))
         });
     });
 
@@ -153,18 +158,15 @@ contract("Token Registry", (accounts) => {
         it("root removes token 0", async() => {
             const i = {
                 address: token0.address,
-                symbol: "SHURI",
-                name: "Shuriken",
-                decimals: 18
+                tid: 0
             }
-            var tx = await tokenRegistry.removeToken(i.address);
-
+            var tx = await tokenRegistry.removeToken(i.tid, OFFCHAIN, { from: root });
             var tx1 = await tokenRegistry.getTokenByAddr(i.address);
 
             eq('', tx1[0])
             eq('', tx1[1])
             eq(0, tx1[2].toNumber())
-            eq(i.address, await oc(tx, "TokenDeleted", "tokenAddress"))
+            eq(i.tid, await oc(tx, "_removeToken", "tid"))
         });
     });
 
