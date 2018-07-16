@@ -79,6 +79,7 @@ contract PredictionHandshake {
                 uint hid;
                 uint side;
                 mapping(uint => uint) amt; // odds => amt
+                mapping(uint => uint) totalStakes; // hid => amt
         }
 
         uint public NETWORK_FEE = 20; // 20%
@@ -155,6 +156,7 @@ contract PredictionHandshake {
                 trial[maker].hid = hid;
                 trial[maker].side = side;
                 trial[maker].amt[odds] += msg.value;
+                trial[maker].totalStakes[hid] += msg.value;
 
                 _init(hid, side, odds, maker, offchain);
         }
@@ -174,6 +176,7 @@ contract PredictionHandshake {
                 // make sure trial is existed and currently betting.
                 require(trial[maker].hid == hid && trial[maker].side == side && trial[maker].amt[odds] > 0);
                 trial[maker].amt[odds] -= value;
+                trial[maker].totalStakes[hid] -= value;
                 
                 Market storage m = markets[hid];
                 
@@ -298,6 +301,7 @@ contract PredictionHandshake {
                 trial[msg.sender].hid = hid;
                 trial[msg.sender].side = side;
                 trial[msg.sender].amt[takerOdds] += msg.value;
+                trial[msg.sender].totalStakes[hid] += msg.value;
 
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
@@ -452,7 +456,11 @@ contract PredictionHandshake {
 
                 if(!(trial[msg.sender].hid == hid)) {
                         msg.sender.transfer(amt);
-                } 
+                } else {
+                        uint trialAmt = trial[msg.sender].totalStakes[hid];
+                        require(amt - trialAmt > 0);
+                        msg.sender.transfer(amt - trialAmt);
+                }
 
                 emit __refund(hid, offchain);
                 emit __test__refund(amt);
