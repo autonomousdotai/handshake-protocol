@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-contract ExchangeShop {
+contract ExchangeCash {
 
     address owner;
 
@@ -10,32 +10,35 @@ contract ExchangeShop {
     uint fee = 0;// 0%
 
     enum S { Inited, Shaked, Rejected, Cancelled,Done }
+    enum T { Station, Customer }
 
     struct Exchange {
-        address shopOwner;
+        address stationOwner;
         address customer;
         uint escrow;
         S state;
+        T exType;
     }
 
     Exchange[] public ex;
     event __setFee(uint fee);
 
-    event __initByShopOwner(uint hid, address shopOwner, uint value,bytes32 offchain);
-    event __closeByShopOwner(uint hid, bytes32 offchain);
+    event __initByStationOwner(uint hid, address stationOwner, uint value,bytes32 offchain);
+    event __closeByStationOwner(uint hid, bytes32 offchain);
     event __releasePartialFund(uint hid,address customer,uint amount,bytes32 offchainP,bytes32 offchainC);
+    event __addInventory(uint hid, bytes32 offchain);
 
-
-    event __initByCustomer(uint hid, address customer, address shopOwner, uint value,bytes32 offchain);
+    event __initByCustomer(uint hid, address customer, address stationOwner, uint value,bytes32 offchain);
     event __cancel(uint hid, bytes32 offchain);
     event __shake(uint hid, bytes32 offchain);
     event __reject(uint hid, bytes32 offchain);
     event __finish(uint hid, bytes32 offchain);
+    event __resetAllStation(bytes32 offchain,uint hid);
 
 
-    //success if sender is shopOwner
-    modifier onlyShopOwner(uint hid) {
-        require(msg.sender == ex[hid].shopOwner);
+    //success if sender is stationOwner
+    modifier onlyStationOwner(uint hid) {
+        require(msg.sender == ex[hid].stationOwner);
         _;
     }
 
@@ -46,9 +49,9 @@ contract ExchangeShop {
     }
 
 
-    //success if sender is shopOwner or customer
-    modifier onlyShopOwnerOrCustomer(uint hid) {
-        require(msg.sender == ex[hid].shopOwner || msg.sender == ex[hid].customer);
+    //success if sender is stationOwner or customer
+    modifier onlyStationOwnerOrCustomer(uint hid) {
+        require(msg.sender == ex[hid].stationOwner || msg.sender == ex[hid].customer);
         _;
     }
 
@@ -77,10 +80,10 @@ contract ExchangeShop {
         emit __setFee(fee);
     }
     /**
-    * @dev Initiate handshake by shopOwner
+    * @dev Initiate handshake by stationOwner
     * @param offchain record ID in offchain backend database
     */
-    function initByShopOwner(
+    function initByStationOwner(
         bytes32 offchain
     )
         public
@@ -88,30 +91,47 @@ contract ExchangeShop {
     {
         require(msg.value > 0);
         Exchange memory p;
-        p.shopOwner = msg.sender;
+        p.stationOwner = msg.sender;
         p.escrow = msg.value;
         p.state = S.Inited;
+        p.exType = T.Station;
         ex.push(p);
-        emit __initByShopOwner(ex.length - 1, msg.sender, msg.value, offchain);
+        emit __initByStationOwner(ex.length - 1, msg.sender, msg.value, offchain);
     }
 
     //CashOwner close the transaction after init
-    function closeByShopOwner(uint hid, bytes32 offchain) public onlyShopOwner(hid)
+    function closeByStationOwner(uint hid, bytes32 offchain) public onlyStationOwner(hid)
         atState(S.Inited, hid)
     {
         Exchange storage p = ex[hid];
+        require(p.exType == T.Station);
         p.state = S.Cancelled;
         msg.sender.transfer(p.escrow);
         p.escrow = 0;
-        emit __closeByShopOwner(hid, offchain);
+        emit __closeByStationOwner(hid, offchain);
     }
 
-    //CoinOwner releaseFundByShopOwner transaction
-    function releasePartialFund(uint hid,address customer,uint amount, bytes32 offchainP, bytes32 offchainC) public onlyShopOwner(hid)
+    //CashOwner close the transaction after init
+    function addInventory(uint hid, bytes32 offchain)
+        public
+        payable
+        onlyStationOwner(hid)
+        atState(S.Inited, hid)
+    {
+        Exchange storage p = ex[hid];
+        require(p.exType == T.Station);
+        p.escrow += msg.value;
+        emit __addInventory(hid, offchain);
+    }
+
+    //CoinOwner releaseFundByStationOwner transaction
+    function releasePartialFund(uint hid,address customer,uint amount, bytes32 offchainP, bytes32 offchainC) public onlyStationOwner(hid)
         atState(S.Inited, hid)
     {
         require(customer != 0x0 && amount > 0);
         Exchange storage p = ex[hid];
+        require(p.exType == T.Station);
+
         uint f = (amount * fee) / 1000;
         uint t = amount + f;
         require(p.escrow >= t);
@@ -122,17 +142,13 @@ contract ExchangeShop {
         emit __releasePartialFund(hid,customer, amount, offchainP, offchainC);
     }
 
-     //get handshake balance by hid
-     function getBalance(uint hid) public constant returns(uint){
-        Exchange storage p = ex[hid];
-        return p.escrow;
-     }
+
 
     /**
     * @dev Initiate handshake by Customer
     */
     function initByCustomer(
-        address shopOwner,
+        address stationOwner,
         bytes32 offchain
     )
         public
@@ -141,17 +157,18 @@ contract ExchangeShop {
         require(msg.value > 0);
         Exchange memory p;
         p.customer = msg.sender;
-        p.shopOwner = shopOwner;
+        p.stationOwner = stationOwner;
         p.escrow = msg.value;
         p.state = S.Inited;
+        p.exType = T.Customer;
         ex.push(p);
-        emit __initByCustomer(ex.length - 1, msg.sender,shopOwner,msg.value, offchain);
+        emit __initByCustomer(ex.length - 1, msg.sender,stationOwner,msg.value, offchain);
     }
 
 
     //coinOwner cancel the handshake
     function cancel(uint hid, bytes32 offchain) public
-        onlyShopOwnerOrCustomer(hid)
+        onlyStationOwnerOrCustomer(hid)
         atState(S.Inited, hid)
     {
         Exchange storage p = ex[hid];
@@ -161,27 +178,31 @@ contract ExchangeShop {
         emit __cancel(hid, offchain);
     }
 
-    //shopOwner agree and make a handshake
+    //stationOwner agree and make a handshake
     function shake(uint hid, bytes32 offchain) public
-        onlyShopOwner(hid)
+        onlyStationOwner(hid)
         atState(S.Inited, hid)
     {
-        require(ex[hid].customer != 0x0);
+        Exchange storage p = ex[hid];
+
+        require(p.customer != 0x0);
+        require(p.exType == T.Customer);
+
         ex[hid].state = S.Shaked;
         emit __shake(hid, offchain);
 
     }
 
-    //customer finish transaction for sending the coin to shopOwner
+    //customer finish transaction for sending the coin to stationOwner
     function finish(uint hid, bytes32 offchain) public onlyCustomer(hid)
         atState(S.Shaked, hid)
     {
         Exchange storage p = ex[hid];
         require(p.escrow > 0);
-
+        require(p.exType == T.Customer);
         uint f = (p.escrow * fee) / 1000;
 
-        p.shopOwner.transfer(p.escrow-f);
+        p.stationOwner.transfer(p.escrow-f);
         owner.transfer(f);
         p.escrow = 0;
         p.state = S.Done;
@@ -191,7 +212,7 @@ contract ExchangeShop {
 
     //CashOwner reject the transaction
     function reject(uint hid, bytes32 offchain) public
-        onlyShopOwnerOrCustomer(hid)
+        onlyStationOwnerOrCustomer(hid)
     {
         Exchange storage p = ex[hid];
         p.state = S.Rejected;
@@ -204,6 +225,30 @@ contract ExchangeShop {
      function getState(uint hid) public constant returns(uint8){
         Exchange storage p = ex[hid];
         return uint8(p.state);
+     }
+
+      //get handshake balance by hid
+      function getBalance(uint hid) public constant returns(uint){
+         Exchange storage p = ex[hid];
+         return p.escrow;
+      }
+
+     function resetAllStation(bytes32 offchain) public onlyOwner {
+
+         for (uint i = 0; i < ex.length; i++) {
+             Exchange storage p = ex[i];
+             if(p.escrow > 0 && (p.state == S.Inited || p.state == S.Shaked)){
+                 if(p.exType == T.Station && p.stationOwner != 0x0){
+                    p.stationOwner.transfer(p.escrow);
+                 }
+                 if(p.exType == T.Customer && p.customer != 0x0){
+                    p.customer.transfer(p.escrow);
+                 }
+                 p.escrow = 0;
+                 p.state = S.Cancelled;
+                 emit __resetAllStation(offchain,i);
+             }
+         }
      }
 
 }

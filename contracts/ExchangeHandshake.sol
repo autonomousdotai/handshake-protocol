@@ -45,6 +45,12 @@ contract ExchangeHandshake {
         _;
     }
 
+    //success if sender is CashOwner or CoinOwner
+        modifier onlyCashOwnerOrCoinOwner(uint hid) {
+            require(msg.sender == ex[hid].coinOwner || msg.sender == ex[hid].cashOwner);
+            _;
+        }
+
     modifier atState(S _s, uint hid) {
         require(_s == ex[hid].state);
         _;
@@ -103,18 +109,18 @@ contract ExchangeHandshake {
         p.state = S.Done;
         uint f = (p.value * p.fee) / 1000;
         owner.transfer(f);
-        msg.sender.transfer(p.value - f);
+        p.cashOwner.transfer(p.value - f);
         p.value = 0;
         emit __accept(hid, offchain);
     }
 
 
     //coinOwner cancel the handshake
-    function cancel(uint hid, bytes32 offchain) public onlyCoinOwner(hid) {
+    function cancel(uint hid, bytes32 offchain) public onlyCashOwnerOrCoinOwner(hid) {
         Exchange storage p = ex[hid];
         require(p.state == S.Shaked || p.state == S.Inited);
         p.state = S.Cancelled;
-        msg.sender.transfer(p.value);
+        p.coinOwner.transfer(p.value);
         p.value = 0;
         emit __cancel(hid, offchain);
     }
