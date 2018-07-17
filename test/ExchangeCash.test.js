@@ -138,7 +138,7 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(tx1), 0)
 
             tx1 = await hs.getState(hid1)
-            eq(4, Number(tx1)) //4:done stage
+            eq(3, Number(tx1)) //3:done stage
 
             await u.assertRevert(hs.releasePartialFund(hid1,customer1,partialValue, offchain,offchain2, { from: StationOwner3}))
 
@@ -226,10 +226,10 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(tx2),0)
 
             tx1 = await hs.getState(hid1)
-            eq(3, Number(tx1)) //3:canceled stage
+            eq(2, Number(tx1)) //2:canceled stage
 
             tx2 = await hs.getState(hid2)
-            eq(3, Number(tx2)) //3:canceled stage
+            eq(2, Number(tx2)) //2:canceled stage
 
 
         })
@@ -244,15 +244,15 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(fee1), fee)
         })
 
-        it('should init & shake successful', async () => {
+        it('should init successful', async () => {
 
             tx1 = await hs.initByCustomer(StationOwner1, offchain, { from: customer1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCustomer", "hid")
 
-            tx1 = await hs.shake(hid1, offchain, { from: StationOwner1})
+           /* tx1 = await hs.shake(hid1, offchain, { from: StationOwner1})
             let shakeHid1 = await oc(tx1, "__shake", "hid")
 
-            eq(Number(hid1), Number(shakeHid1))
+            eq(Number(hid1), Number(shakeHid1))*/
 
         })
 
@@ -260,10 +260,10 @@ contract("ExchangeHandshake", (accounts) => {
 
             tx1 = await hs.initByCustomer(StationOwner1, offchain, { from: customer1, value: serviceValue })
             hid1 = await oc(tx1, "__initByCustomer", "hid")
-
+/*
             tx1 = await hs.shake(hid1, offchain, { from: StationOwner1})
             shakeHid1 = await oc(tx1, "__shake", "hid")
-            eq(Number(hid1), Number(shakeHid1))
+            eq(Number(hid1), Number(shakeHid1))*/
 
             let blb1= u.balance(StationOwner1)
 
@@ -281,9 +281,9 @@ contract("ExchangeHandshake", (accounts) => {
             tx1 = await hs.initByCustomer(StationOwner1, offchain, { from: customer2, value: serviceValue })
             hid1 = await oc(tx1, "__initByCustomer", "hid")
 
-            tx1 = await hs.shake(hid1, offchain, { from: StationOwner1})
+            /*tx1 = await hs.shake(hid1, offchain, { from: StationOwner1})
             shakeHid1 = await oc(tx1, "__shake", "hid")
-            eq(Number(hid1), Number(shakeHid1))
+            eq(Number(hid1), Number(shakeHid1))*/
 
             await u.assertRevert(hs.finish(hid1, offchain, { from: StationOwner1}))
 
@@ -294,16 +294,16 @@ contract("ExchangeHandshake", (accounts) => {
             tx1 = await hs.initByCustomer(StationOwner1, offchain, { from: customer2, value: serviceValue })
             hid1 = await oc(tx1, "__initByCustomer", "hid")
 
-            tx1 = await hs.shake(hid1, offchain, { from: StationOwner1})
+           /* tx1 = await hs.shake(hid1, offchain, { from: StationOwner1})
             shakeHid1 = await oc(tx1, "__shake", "hid")
-            eq(Number(hid1), Number(shakeHid1))
+            eq(Number(hid1), Number(shakeHid1))*/
 
             tx1 = await hs.reject(hid1, offchain, { from: customer2})
             rejectHid1 = await oc(tx1, "__reject", "hid")
             eq(Number(hid1), Number(rejectHid1))
 
             tx1 = await hs.getState(hid1)
-            eq(2, Number(tx1)) //5:rejected stage
+            eq(1, Number(tx1)) //1:rejected stage
 
         })
 
@@ -312,26 +312,27 @@ contract("ExchangeHandshake", (accounts) => {
             tx1 = await hs.initByCustomer(StationOwner3, offchain, { from: customer2, value: serviceValue })
             hid1 = await oc(tx1, "__initByCustomer", "hid")
 
-            tx1 = await hs.shake(hid1, offchain, { from: StationOwner3})
+            /*tx1 = await hs.shake(hid1, offchain, { from: StationOwner3})
             shakeHid1 = await oc(tx1, "__shake", "hid")
             eq(Number(hid1), Number(shakeHid1))
-
+*/
             tx1 = await hs.reject(hid1, offchain, { from: StationOwner3})
             rejectHid1 = await oc(tx1, "__reject", "hid")
             eq(Number(hid1), Number(rejectHid1))
 
             tx1 = await hs.getState(hid1)
-            eq(2, Number(tx1)) //2:rejected stage
+            eq(1, Number(tx1)) //1:rejected stage
 
         })
 
         it('should able to reset station owner & customer', async () => {
+            let blb1= u.balance(StationOwner1)
 
             tx1 = await hs.initByStationOwner(offchain, { from: StationOwner1, value: serviceValue })
             hid1 = await oc(tx1, "__initByStationOwner", "hid")
 
 
-            tx2 = await hs.initByStationOwner(offchain, { from: StationOwner1, value: serviceValue })
+            tx2 = await hs.initByStationOwner(offchain, { from: StationOwner2, value: serviceValue })
             hid2 = await oc(tx2, "__initByStationOwner", "hid")
 
             tx3 = await hs.initByCustomer(StationOwner3, offchain, { from: customer2, value: serviceValue })
@@ -339,6 +340,10 @@ contract("ExchangeHandshake", (accounts) => {
 
 
             tx1 = await hs.resetAllStation(offchain, { from: root})
+            let bla1= u.balance(StationOwner1)
+            let gasFee = 8605699999997952;//cost when call initByStationOwner function
+            console.log(Number(blb1) - Number(bla1));
+            eq(Number(blb1),Number(bla1)+gasFee);
 
             tx1 = await hs.getBalance(hid1, { from: StationOwner1})
             eq(Number(tx1),0)
@@ -350,13 +355,13 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(tx3),0)
 
             tx1 = await hs.getState(hid1)
-            eq(3, Number(tx1)) //3:canceled stage
+            eq(2, Number(tx1)) //2:canceled stage
 
             tx2 = await hs.getState(hid2)
-            eq(3, Number(tx2)) //3:canceled stage
+            eq(2, Number(tx2)) //2:canceled stage
 
             tx3 = await hs.getState(hid3)
-            eq(3, Number(tx3)) //3:canceled stage
+            eq(2, Number(tx3)) //2:canceled stage
 
 
         })
