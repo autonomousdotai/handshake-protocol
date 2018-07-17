@@ -78,6 +78,7 @@ contract PredictionHandshake {
         struct Trial {
                 uint hid;
                 uint side;
+                bool valid;
                 mapping(uint => uint) amt; // odds => amt
                 mapping(uint => uint) totalStakes; // hid => amt
         }
@@ -157,6 +158,7 @@ contract PredictionHandshake {
                 trial[maker].side = side;
                 trial[maker].amt[odds] += msg.value;
                 trial[maker].totalStakes[hid] += msg.value;
+                trial[maker].valid = true;
 
                 _init(hid, side, odds, maker, offchain);
         }
@@ -302,6 +304,7 @@ contract PredictionHandshake {
                 trial[msg.sender].side = side;
                 trial[msg.sender].amt[takerOdds] += msg.value;
                 trial[msg.sender].totalStakes[hid] += msg.value;
+                trial[msg.sender].valid = true;
 
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
@@ -454,12 +457,13 @@ contract PredictionHandshake {
                 m.open[msg.sender][1].stake = 0;
                 m.open[msg.sender][2].stake = 0;
 
-                if(!(trial[msg.sender].hid == hid)) {
+                if(!(trial[msg.sender].valid)) {
                         msg.sender.transfer(amt);
                 } else {
                         uint trialAmt = trial[msg.sender].totalStakes[hid];
-                        require(amt - trialAmt > 0);
-                        msg.sender.transfer(amt - trialAmt);
+                        amt = amt - trialAmt;
+                        require(amt > 0);
+                        msg.sender.transfer(amt);
                 }
 
                 emit __refund(hid, offchain);

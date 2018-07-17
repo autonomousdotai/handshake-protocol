@@ -748,4 +748,103 @@ contract("PredictionHandshake", (accounts) => {
                 })
         })
 
+
+        describe('user story: refund (use both free bet and real bet)', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 10,
+                                disputeWindow: 10,
+                                creator: creator1 
+                        }
+                        const o = {
+                                hid: 8
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init", async () => {
+                        const i = {
+                                hid: 8,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.stake * i.odds / 100
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                })
+
+                it('should be able to init test drive', async() => {
+                        const i = {
+                                hid: 8,
+                                side: SUPPORT,
+                                odds: 100,
+                                stake: web3.toWei(0.001, 'ether'),
+                                maker: maker2,
+                                creator: creator1
+                        }
+        
+                        const tx = await hs.initTestDrive(i.hid, i.side, i.odds, i.maker, OFFCHAIN, { from: root, value: i.stake })
+                        const trial = await hs.getOpenData(i.hid, i.side, i.maker, i.odds);
+        
+                        eq(web3.toWei(0.1 + 0.001, 'ether'), trial[0].toNumber())
+                        eq(web3.toWei(0.1 + 0.001, 'ether'), await oc(tx, "__test__init", "stake"))    
+                });
+
+                it("shake", async () => {
+                        const i = {
+                                hid: 8,
+                                side: AGAINST, 
+                                stake: web3.toWei(0.2),
+                                takerOdds: 150,
+                                makerOdds: 300,
+                                maker: maker2,
+                                sender: taker1 
+                        }
+                        const o = {
+                                match_taker_stake: i.stake,
+                                match_taker_payout: i.stake * i.takerOdds / 100,
+                                match_maker_stake: web3.toWei(0.1),
+                                match_maker_payout: web3.toWei(0.3),
+                                open_maker_stake: web3.toWei(0.2),
+                                open_maker_payout: web3.toWei(0.6)
+                        }
+                        const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, {from: i.sender, value: i.stake})
+                })
+
+                it("report outcome (draw)", async () => {
+                        const i = {
+                                hid: 8,
+                                outcome: DRAW, 
+                                creator: creator1
+                        }
+                        u.increaseTime(10)
+                        await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator });
+                })
+
+                it("should refund", async () => {
+                        const i = {
+                                hid: 8,
+                                sender: maker2,
+                                creator: creator1
+                        }
+                        const o = {
+                                payout: web3.toWei(0.1)
+                        }
+                        u.increaseTime(20)
+                        const tx = await hs.refund(i.hid, OFFCHAIN, {from: i.sender})
+                        eq(o.payout, await oc(tx, "__test__refund", "amt").toNumber())
+                })
+        })
+
 })
