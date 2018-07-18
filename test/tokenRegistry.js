@@ -94,7 +94,7 @@ contract("Token Registry", (accounts) => {
     });
 
     describe("root adds tokens to TokenRegistry contract", () => {
-        it("non-root is not able to add token", async() => {
+        it("non-root add token 0", async() => {
             const i = {
                 address: token0.address,
                 symbol: "SHURI",
@@ -102,7 +102,12 @@ contract("Token Registry", (accounts) => {
                 decimals: 18
             }
 
-            await u.assertRevert(tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: maker1 })) 
+            const o = {
+                tid: 0
+            }
+
+            const tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: maker1 })
+            eq(o.tid, await oc(tx, "__addNewToken", "tid")) 
         });
 
         it("root adds token 0", async() => {
@@ -114,7 +119,7 @@ contract("Token Registry", (accounts) => {
             }
 
             const o = {
-                tid: 0
+                tid: 1
             }
 
             var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: root }); 
@@ -130,50 +135,19 @@ contract("Token Registry", (accounts) => {
             }
 
             const o = {
-                tid: 1
-            }
-
-            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: root }); 
-            eq(o.tid, await oc(tx, "__addNewToken", "tid"))
-        });
-
-        it("root adds token 2", async() => {
-            const i = {
-                address: token2.address,
-                symbol: "SHURI",
-                name: "Shuriken",
-                decimals: 18
-            }
-            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: root }); 
-
-            const o = {
                 tid: 2
             }
 
+            var tx = await tokenRegistry.addNewToken(i.address, i.symbol, i.name, i.decimals, OFFCHAIN, { from: root }); 
             eq(o.tid, await oc(tx, "__addNewToken", "tid"))
         });
-    });
 
-    describe("root removes token", () => {
-        it("root removes token 0", async() => {
-            const i = {
-                address: token0.address,
-                tid: 0
-            }
-            var tx = await tokenRegistry.removeToken(i.tid, OFFCHAIN, { from: root });
-            var tx1 = await tokenRegistry.getTokenByAddr(i.address);
-
-            eq('', tx1[0])
-            eq('', tx1[1])
-            eq(0, tx1[2].toNumber())
-            eq(i.tid, await oc(tx, "_removeToken", "tid"))
-        });
     });
 
     describe("checks tokens existence", () => {
-        it("token 0 is not existed", async() => {
+        it("token 2 is not existed", async() => {
             const i = {
-                address: token0.address
+                address: token2.address
             }
 
             const o = {
@@ -181,7 +155,6 @@ contract("Token Registry", (accounts) => {
             }
 
             var tx = await tokenRegistry.tokenIsExisted(i.address);
-
             eq(o.isExisted, tx);
         });
 

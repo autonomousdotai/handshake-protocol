@@ -27,7 +27,7 @@ contract TokenRegistry {
     
     event __addNewToken(uint tid, bytes32 offchain);
 
-    function addNewToken(address _tokenAddr, string _symbol, string _name, uint8 _decimals, bytes32 offchain) public onlyOwner {
+    function addNewToken(address _tokenAddr, string _symbol, string _name, uint8 _decimals, bytes32 offchain) public {
         TokenMetadata memory tokenData = TokenMetadata({
             tokenAddress: _tokenAddr,
             symbol: _symbol,
@@ -44,16 +44,6 @@ contract TokenRegistry {
     
     function transferToken(address _tokenAddr, address _from, address _to, uint256 _amount) public returns(bool) {
         return Token(_tokenAddr).transferFrom(_from, _to, _amount);
-    }
-
-    event _removeToken(uint tid, bytes32 offchain);
-    
-    function removeToken(uint tid, bytes32 offchain) public onlyOwner {
-        address tokenAddr = tokens[tid];
-        delete tokens[tid];
-        delete tokenMapping[tokenAddr];
-        
-        emit _removeToken(tid, offchain);
     }
     
     function getTokenByAddr(address _tokenAddr) public view returns 
