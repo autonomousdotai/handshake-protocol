@@ -106,7 +106,7 @@ contract("ExchangeHandshake", (accounts) => {
 
         })
 
-        it('should change stage to done when transfer all coin in escrow', async () => {
+        it('should able to transfer until coin in escrow', async () => {
             tx1 = await hs.setFee(0, { from: root })
 
             tx1 = await hs.initByStationOwner(offchain, { from: StationOwner3, value: serviceValue })
@@ -138,7 +138,7 @@ contract("ExchangeHandshake", (accounts) => {
             eq(Number(tx1), 0)
 
             tx1 = await hs.getState(hid1)
-            eq(3, Number(tx1)) //3:done stage
+            eq(0, Number(tx1)) //0:init stage
 
             await u.assertRevert(hs.releasePartialFund(hid1,customer1,partialValue, offchain,offchain2, { from: StationOwner3}))
 
@@ -289,7 +289,7 @@ contract("ExchangeHandshake", (accounts) => {
 
         })
 
-        it('should reject after shook by customer successful', async () => {
+        it('should not able reject after shook by customer', async () => {
 
             tx1 = await hs.initByCustomer(StationOwner1, offchain, { from: customer2, value: serviceValue })
             hid1 = await oc(tx1, "__initByCustomer", "hid")
@@ -298,12 +298,10 @@ contract("ExchangeHandshake", (accounts) => {
             shakeHid1 = await oc(tx1, "__shake", "hid")
             eq(Number(hid1), Number(shakeHid1))*/
 
-            tx1 = await hs.reject(hid1, offchain, { from: customer2})
-            rejectHid1 = await oc(tx1, "__reject", "hid")
-            eq(Number(hid1), Number(rejectHid1))
+            await u.assertRevert(hs.reject(hid1, offchain, { from: customer2}))
 
             tx1 = await hs.getState(hid1)
-            eq(1, Number(tx1)) //1:rejected stage
+            eq(0, Number(tx1)) //0:init stage
 
         })
 

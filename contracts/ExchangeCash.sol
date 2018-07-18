@@ -65,6 +65,11 @@ contract ExchangeCash {
         _;
     }
 
+    modifier atType(T _t, uint hid) {
+        require(_t == ex[hid].exType);
+        _;
+    }
+
     /**
         * @dev Initiate exchange fee by owner
         * @param f exchange fee
@@ -101,9 +106,9 @@ contract ExchangeCash {
     //CashOwner close the transaction after init
     function closeByStationOwner(uint hid, bytes32 offchain) public onlyStationOwner(hid)
         atState(S.Inited, hid)
+        atType(T.Station, hid)
     {
         Exchange storage p = ex[hid];
-        require(p.exType == T.Station);
         p.state = S.Cancelled;
         msg.sender.transfer(p.escrow);
         p.escrow = 0;
@@ -116,9 +121,10 @@ contract ExchangeCash {
         payable
         onlyStationOwner(hid)
         atState(S.Inited, hid)
+        atType(T.Station, hid)
     {
+        require(msg.value > 0);
         Exchange storage p = ex[hid];
-        require(p.exType == T.Station);
         p.escrow += msg.value;
         emit __addInventory(hid, offchain);
     }
@@ -126,21 +132,18 @@ contract ExchangeCash {
     //CoinOwner releaseFundByStationOwner transaction
     function releasePartialFund(uint hid,address customer,uint amount, bytes32 offchainP, bytes32 offchainC) public onlyStationOwner(hid)
         atState(S.Inited, hid)
+        atType(T.Station, hid)
     {
         require(customer != 0x0 && amount > 0);
         Exchange storage p = ex[hid];
-        require(p.exType == T.Station);
-
         uint f = (amount * fee) / 1000;
         uint t = amount + f;
         require(p.escrow >= t);
         p.escrow -= t;
         owner.transfer(f);
         customer.transfer(amount);
-        if (p.escrow == 0) p.state = S.Done;
         emit __releasePartialFund(hid,customer, amount, offchainP, offchainC);
     }
-
 
 
     /**
@@ -171,21 +174,25 @@ contract ExchangeCash {
         atState(S.Inited, hid)
     {
         Exchange storage p = ex[hid];
-        p.state = S.Cancelled;
-        msg.sender.transfer(p.escrow);
+        if(p.exType == T.Station && p.stationOwner != 0x0){
+            p.stationOwner.transfer(p.escrow);
+         }
+         if(p.exType == T.Customer && p.customer != 0x0){
+            p.customer.transfer(p.escrow);
+         }
         p.escrow = 0;
+        p.state = S.Cancelled;
         emit __cancel(hid, offchain);
     }
 
     //customer finish transaction for sending the coin to stationOwner
     function finish(uint hid, bytes32 offchain) public onlyCustomer(hid)
         atState(S.Inited, hid)
+        atType(T.Customer, hid)
     {
         Exchange storage p = ex[hid];
-        require(p.escrow > 0);
-        require(p.exType == T.Customer);
         uint f = (p.escrow * fee) / 1000;
-
+        require(p.escrow > f);
         p.stationOwner.transfer(p.escrow-f);
         owner.transfer(f);
         p.escrow = 0;
@@ -196,12 +203,13 @@ contract ExchangeCash {
 
     //CashOwner reject the transaction
     function reject(uint hid, bytes32 offchain) public
-        onlyStationOwnerOrCustomer(hid)
+        onlyStationOwner(hid)
+        atType(T.Customer, hid)
     {
         Exchange storage p = ex[hid];
-        p.state = S.Rejected;
         p.customer.transfer(p.escrow);
         p.escrow = 0;
+        p.state = S.Rejected;
         emit __reject(hid, offchain);
     }
 
