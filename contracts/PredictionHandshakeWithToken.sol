@@ -60,12 +60,6 @@ contract PredictionHandshakeWithToken {
         mapping(uint => uint) odds; // odds => pool size
     }
 
-    struct Trial {
-        uint hid;
-        uint side;
-        mapping(uint => uint) amt; // odds => amt
-    }
-
     uint public NETWORK_FEE = 20; // 20%
     uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
     uint public DISPUTE_THRESHOLD = 5; // 5%
@@ -74,8 +68,7 @@ contract PredictionHandshakeWithToken {
     Market[] public markets;
     address public root;
     mapping(address => uint) public total;
-
-    mapping(address => Trial) trial;
+    
     TokenRegistry tokenRegistry;
     address tokenRegistryAddress;
 
@@ -144,26 +137,6 @@ contract PredictionHandshakeWithToken {
     {
         _init(hid, side, odds, msg.sender, amount, offchain, 0);
     }
-
-
-    // market maker. only called by root.  
-    function initTestDrive(
-        uint hid, 
-        uint side, 
-        uint odds, 
-        address maker, 
-        uint amount,
-        bytes32 offchain
-    ) 
-        public
-        onlyRoot
-    {
-        trial[maker].hid = hid;
-        trial[maker].side = side;
-        trial[maker].amt[odds] += amount;
-
-        _init(hid, side, odds, maker, amount, offchain, 1);
-    }
     
     function _init(
         uint hid, 
@@ -195,48 +168,6 @@ contract PredictionHandshakeWithToken {
         emit __test__init(m.open[maker][side].stake);
     }
     
-    event __uninitTestDrive(uint hid, bytes32 offchain);
-    
-    function uninitTestDrive
-    (
-        uint hid,
-        uint side,
-        uint odds,
-        address maker,
-        uint value,
-        bytes32 offchain
-    )
-        public
-        onlyRoot
-    {
-        // make sure trial is existed and currently betting.
-        require(trial[maker].hid == hid && trial[maker].side == side && trial[maker].amt[odds] > 0);
-        trial[maker].amt[odds] -= value;
-        
-        Market storage m = markets[hid];
-        
-        require(m.open[maker][side].stake >= value);
-        require(m.open[maker][side].odds[odds] >= value);
-        require(m.totalOpenStake >= value);
-
-        m.open[maker][side].stake -= value;
-        m.open[maker][side].odds[odds] -= value;
-        m.totalOpenStake -= value;
-
-        require(total[m.token] + value >= total[m.token]);
-        total[m.token] += value;
-        
-        emit __uninitTestDrive(hid, offchain);
-    }
-    
-    event __withdrawTrial(uint256 amount);
-
-    function withdrawTrial(address _tokenAddr) public onlyRoot {
-        require(tokenRegistry.transferToken(_tokenAddr, address(this), root, total[_tokenAddr]));
-        emit __withdrawTrial(total[_tokenAddr]);
-        total[_tokenAddr] = 0;
-    }
-    
     // market maker cancels order
     function uninit(
         uint hid, 
@@ -250,12 +181,8 @@ contract PredictionHandshakeWithToken {
     {
         Market storage m = markets[hid];
 
-        uint trialAmt; 
-        if (trial[msg.sender].hid == hid && trial[msg.sender].side == side)
-            trialAmt = trial[msg.sender].amt[odds];
-
-        require(m.open[msg.sender][side].stake - trialAmt >= stake);
-        require(m.open[msg.sender][side].odds[odds] - trialAmt >= stake);
+        require(m.open[msg.sender][side].stake >= stake);
+        require(m.open[msg.sender][side].odds[odds] >= stake);
 
         require(tokenRegistry.transferToken(m.token, address(this), msg.sender, stake));
 
@@ -287,27 +214,6 @@ contract PredictionHandshakeWithToken {
         public 
     {
         _shake(hid, side, msg.sender, takerOdds, maker, makerOdds, amount, offchain);
-    }
-
-
-    function shakeTestDrive(
-        uint hid, 
-        uint side, 
-        address taker,
-        uint takerOdds, 
-        address maker, 
-        uint makerOdds, 
-        uint amount,
-        bytes32 offchain
-    ) 
-        public 
-        onlyRoot
-    {
-        trial[msg.sender].hid = hid;
-        trial[msg.sender].side = side;
-        trial[msg.sender].amt[takerOdds] += amount;
-
-        _shake(hid, side, taker, takerOdds, maker, makerOdds, amount, offchain);
     }
 
 
@@ -384,10 +290,6 @@ contract PredictionHandshakeWithToken {
         _collect(hid, msg.sender, offchain);
     }
 
-    function collectTestDrive(uint hid, address winner, bytes32 offchain) public onlyRoot {
-        _collect(hid, winner, offchain);
-    }
-
     // collect payouts & outstanding stakes (if there is outcome)
     function _collect(uint hid, address winner, bytes32 offchain) private {
         Market storage m = markets[hid]; 
@@ -455,11 +357,8 @@ contract PredictionHandshakeWithToken {
         m.open[msg.sender][1].stake = 0;
         m.open[msg.sender][2].stake = 0;
 
-        if (!(trial[msg.sender].hid == hid)) {
-            require(tokenRegistry.transferToken(m.token, address(this), msg.sender, amt));
-        }
+        require(tokenRegistry.transferToken(m.token, address(this), msg.sender, amt));
         
-
         emit __refund(hid, offchain);
         emit __test__refund(amt);
     }
