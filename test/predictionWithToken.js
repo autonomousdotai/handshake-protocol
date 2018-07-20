@@ -39,20 +39,15 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 token.address,
                 "SHURI",
                 "Shuriken",
-                18
+                18,
+                OFFCHAIN
             );
 
             const o = {
-                address: token.address,
-                symbol: "SHURI",
-                name: "Shuriken",
-                decimals: 18
+                tid: 0
             }
 
-            eq(o.address, await oc(tx, "NewTokenAdded", "tokenAddress"))
-            eq(o.symbol, await oc(tx, "NewTokenAdded", "symbol"))
-            eq(o.name, await oc(tx, "NewTokenAdded", "name"))
-            eq(o.decimals, await oc(tx, "NewTokenAdded", "decimals"))
+            eq(o.tid, await oc(tx, "__addNewToken", "tid"))
         });
     });
 
@@ -375,7 +370,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 hid: 1,
                 reporter: creator2
             }
-            u.increaseTime(60)
+            u.increaseTime(15)
             const tx = await hs.report(i.hid, SUPPORT, OFFCHAIN, {from: i.reporter})
         });
     });
@@ -393,6 +388,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 payout: 694.6*(10**18) //0.54 + 0.16 - 0.0054 
             }
 
+            u.increaseTime(30)
             const tx = await hs.collect(i.hid, OFFCHAIN, { from: i.trader })
             eq(o.networkComm, await oc(tx, "__test__collect", "network").toNumber())
             eq(o.marketComm, await oc(tx, "__test__collect", "market").toNumber())
@@ -468,85 +464,6 @@ contract("PredictionHandshakeWithToken", (accounts) => {
         });
     });
 
-    describe("uninit for trial", async() => {
-        it('create a brand new market', async() => {
-            const i = {
-                fee: 0,
-                source: s2b("livescore.com"),
-                token: token.address,
-                closingWindow: 1000,
-                reportWindow: 2000,
-                disputeWindow: 3000,
-                creator: creator1 
-            }
-            const o = {
-                hid: 3
-            }
-
-            const tx = await hs.createMarket(i.fee, i.source, i.token, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator })
-
-            eq(o.hid, await oc(tx, "__createMarket", "hid"))
-        });
-
-        it('should be able to init test drive', async() => {
-            const i = {
-                hid: 3,
-                side: SUPPORT,
-                odds: 100,
-                amount: web3.toHex(1000 * (10**18)),
-                maker: maker3,
-                creator: creator1
-            }
-
-            const o = {
-                stake: web3.toBigNumber(i.amount)
-            }
-
-            const tx = await hs.initTestDrive(i.hid, i.side, i.odds, i.maker, i.amount, OFFCHAIN, { from: root, value: i.stake })
-            
-            eq(o.stake.toNumber(), await oc(tx, "__test__init", "stake").toNumber())    
-        });
-
-        it('should be able to uninit for trial', async() => {
-            const i = {
-                hid: 3,
-                side: SUPPORT,
-                odds: 100,
-                maker: maker3,
-                value: web3.toHex(1000*(10**18))
-            }
-
-            const o = {
-                amount: web3.toBigNumber(i.value)
-            }
-          
-            const tx = await hs.uninitTestDrive(i.hid, i.side, i.odds, i.maker, i.value, OFFCHAIN, { from: root })
-
-            const total = await hs.total(token.address);
-            const trial = await hs.getOpenData(i.hid, i.maker, i.side);
-
-            assert.equal(o.amount.toNumber(), total.toNumber())
-            assert.equal(0, trial[0].toNumber())
-        });
-
-        it('root is able to withdraw ether from trial total', async() => {
-            const total = await hs.total(token.address)
-            const rootBalanceBefore = await tokenRegistry.getBalanceOf(token.address, root);
-
-            const tx = await hs.withdrawTrial(token.address, { from: root });
-            const rootBalanceAfter = await tokenRegistry.getBalanceOf(token.address, root);
-
-            const expected = (rootBalanceBefore.toNumber() + total.toNumber()) / 10**18
-
-            const realValue = rootBalanceAfter.toNumber() / 10**18
-
-            assert.equal(Math.floor(expected), Math.floor(realValue))
-
-            const totalAfter = await hs.total(token.address)
-
-            assert.equal(0, totalAfter.toNumber())
-        });
-    });
 
     describe('dispute function', async() => {
         it('create a market', async() => {
@@ -560,7 +477,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 creator: creator1 
             }
             const o = {
-                hid: 4
+                hid: 3
             }
 
             const tx = await hs.createMarket(i.fee, i.source, i.token, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator })
@@ -570,7 +487,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
 
         it("maker1 places an order", async () => {
             const i = {
-                hid: 4,
+                hid: 3,
                 side: SUPPORT, 
                 stake: web3.toHex(200*(10**18)),
                 odds: 300,
@@ -586,7 +503,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
 
         it("taker1 fills maker1's order", async() => {
             const i = {
-                hid: 4,
+                hid: 3,
                 side: AGAINST,
                 taker: taker1,
                 takerOdds: 150,
@@ -619,7 +536,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
 
         it('creator reports an outcome on the order', async () => {
             const i = {
-                hid: 4,
+                hid: 3,
                 creator: creator1,
                 outcome: 2
             }
@@ -630,14 +547,14 @@ contract("PredictionHandshakeWithToken", (accounts) => {
     
             await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator });
 
-            var marketState = await hs.markets(4, { from: root });
+            var marketState = await hs.markets(3, { from: root });
 
             eq(o.outcome, marketState[8].toNumber())
         });
 
         it('maker1 disputes the outcome', async () => {
             const i = {
-                hid: 4
+                hid: 3
             }
     
             const o = {
@@ -646,14 +563,14 @@ contract("PredictionHandshakeWithToken", (accounts) => {
 
             const tx = await hs.dispute(i.hid, OFFCHAIN, { from: maker1 });
 
-            const marketState = await hs.markets(4, { from: root });
+            const marketState = await hs.markets(3, { from: root });
 
             eq(o.totalDisputeStake.toNumber(), marketState[11].toNumber())
         });
 
         it('root resolves the dispute', async() => {
             const i = {
-                hid: 4,
+                hid: 3,
                 outcome: 1
             }
 
@@ -663,7 +580,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
             }
 
             const tx = await hs.resolve(i.hid, i.outcome, OFFCHAIN, { from: root });
-            const marketState = await hs.markets(4, { from: root });
+            const marketState = await hs.markets(3, { from: root });
             
             eq(o.outcome, marketState[8].toNumber());
             eq(o.state, marketState[7].toNumber());

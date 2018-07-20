@@ -69,6 +69,7 @@ contract PredictionHandshakeWithToken {
     address public root;
     mapping(address => uint) public total;
     
+    // token management
     TokenRegistry tokenRegistry;
     address tokenRegistryAddress;
 
@@ -83,6 +84,7 @@ contract PredictionHandshakeWithToken {
         _;
     }
 
+    // grant permission for this contract to send ERC20 token
     function approveNewToken(address[] _tokenAddresses) public onlyRoot {
         for(uint i = 0; i < _tokenAddresses.length; i++) {
             if (tokenRegistry.tokenIsExisted(_tokenAddresses[i]) == true) {
@@ -91,6 +93,14 @@ contract PredictionHandshakeWithToken {
                 );
             } 
         }
+    }
+
+    function approveNewToken(address tokenAddress) public onlyRoot {
+        if (tokenRegistry.tokenIsExisted(tokenAddress) == true) {
+            require(
+                Token(tokenAddress).approve(tokenRegistryAddress, 2**256-1)
+            );
+        } 
     }
 
     event __createMarket(uint hid, bytes32 offchain); 
@@ -107,8 +117,42 @@ contract PredictionHandshakeWithToken {
         public 
         tokenExisted(tokenAddress)
     {
+        _createMarket(msg.sender, fee, source, tokenAddress, closingWindow, reportWindow, disputeWindow, offchain);
+    }
+
+
+    function createMarketForShurikenUser(
+        address creator,
+        uint fee, 
+        bytes32 source,
+        address tokenAddress,
+        uint closingWindow, 
+        uint reportWindow, 
+        uint disputeWindow,
+        bytes32 offchain
+    ) 
+        public 
+        tokenExisted(tokenAddress)
+        onlyRoot
+    {
+        _createMarket(creator, fee, source, tokenAddress, closingWindow, reportWindow, disputeWindow, offchain);
+    }
+
+
+    function _createMarket(
+        address creator,
+        uint fee, 
+        bytes32 source,
+        address tokenAddress,
+        uint closingWindow, 
+        uint reportWindow, 
+        uint disputeWindow,
+        bytes32 offchain
+    ) 
+        private 
+    {
         Market memory m;
-        m.creator = msg.sender;
+        m.creator = creator;
         m.fee = fee;
         m.source = source;
         m.token = tokenAddress;
@@ -135,39 +179,24 @@ contract PredictionHandshakeWithToken {
     ) 
         public 
     {
-        _init(hid, side, odds, msg.sender, amount, offchain, 0);
-    }
-    
-    function _init(
-        uint hid, 
-        uint side, 
-        uint odds, 
-        address maker, 
-        uint amount,
-        bytes32 offchain,
-        uint testDrive
-    ) 
-        private 
-    {
         Market storage m = markets[hid];
 
         require(now < m.closingTime);
         require(m.state == 1);
+        require(tokenRegistry.transferToken(m.token, msg.sender, address(this), amount));
 
-        if (testDrive != 1) {
-            require(tokenRegistry.transferToken(m.token, maker, address(this), amount));
-        } else {
-            require(tokenRegistry.transferToken(m.token, root, address(this), amount));
-        }
-
-        m.open[maker][side].stake += amount;
-        m.open[maker][side].odds[odds] += amount;
+        m.open[msg.sender][side].stake += amount;
+        m.open[msg.sender][side].odds[odds] += amount;
         m.totalOpenStake += amount;
 
         emit __init(hid, offchain);
-        emit __test__init(m.open[maker][side].stake);
+        emit __test__init(m.open[msg.sender][side].stake);
     }
     
+    
+    event __uninit(uint hid, bytes32 offchain);
+    event __test__uninit(uint stake);
+
     // market maker cancels order
     function uninit(
         uint hid, 
@@ -183,7 +212,6 @@ contract PredictionHandshakeWithToken {
 
         require(m.open[msg.sender][side].stake >= stake);
         require(m.open[msg.sender][side].odds[odds] >= stake);
-
         require(tokenRegistry.transferToken(m.token, address(this), msg.sender, stake));
 
         m.open[msg.sender][side].stake -= stake;
@@ -194,11 +222,6 @@ contract PredictionHandshakeWithToken {
         emit __test__uninit(m.open[msg.sender][side].stake);
     }
 
-
-    event __uninit(uint hid, bytes32 offchain);
-    event __test__uninit(uint stake);
-
-    
     event __shake(uint hid, bytes32 offchain);
 
     // market taker
@@ -213,22 +236,6 @@ contract PredictionHandshakeWithToken {
     ) 
         public 
     {
-        _shake(hid, side, msg.sender, takerOdds, maker, makerOdds, amount, offchain);
-    }
-
-
-    function _shake(
-        uint hid, 
-        uint side, 
-        address taker,
-        uint takerOdds, 
-        address maker, 
-        uint makerOdds, 
-        uint amount,
-        bytes32 offchain
-    ) 
-        private 
-    {
         require(maker != 0);
         require(takerOdds >= ODDS_1);
         require(makerOdds >= ODDS_1);
@@ -240,7 +247,7 @@ contract PredictionHandshakeWithToken {
 
         uint makerSide = 3 - side;
 
-        require(tokenRegistry.transferToken(m.token, taker, address(this), amount));
+        require(tokenRegistry.transferToken(m.token, msg.sender, address(this), amount));
         uint takerStake = amount;
         uint makerStake = m.open[maker][makerSide].stake;
 
@@ -274,9 +281,9 @@ contract PredictionHandshakeWithToken {
         m.totalMatchedStake += makerStake;
 
         // add taker's order to matched
-        m.matched[taker][side].odds[takerOdds] += takerStake;
-        m.matched[taker][side].stake += takerStake;
-        m.matched[taker][side].payout += takerPayout;
+        m.matched[msg.sender][side].odds[takerOdds] += takerStake;
+        m.matched[msg.sender][side].stake += takerStake;
+        m.matched[msg.sender][side].payout += takerPayout;
         m.totalMatchedStake += takerStake;
 
         emit __shake(hid, offchain);
