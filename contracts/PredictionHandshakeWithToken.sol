@@ -85,7 +85,7 @@ contract PredictionHandshakeWithToken {
     }
 
     // grant permission for this contract to send ERC20 token
-    function approveNewToken(address[] _tokenAddresses) public onlyRoot {
+    function approveNewTokens(address[] _tokenAddresses) public onlyRoot {
         for(uint i = 0; i < _tokenAddresses.length; i++) {
             if (tokenRegistry.tokenIsExisted(_tokenAddresses[i]) == true) {
                 require(
@@ -95,12 +95,15 @@ contract PredictionHandshakeWithToken {
         }
     }
 
-    function approveNewToken(address tokenAddress) public onlyRoot {
+    event __approveNewToken(bytes32 offchain); 
+
+    function approveNewToken(address tokenAddress, bytes32 offchain) public onlyRoot {
         if (tokenRegistry.tokenIsExisted(tokenAddress) == true) {
             require(
                 Token(tokenAddress).approve(tokenRegistryAddress, 2**256-1)
             );
-        } 
+            emit __approveNewToken(offchain);
+        }
     }
 
     event __createMarket(uint hid, bytes32 offchain); 
