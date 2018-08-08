@@ -941,7 +941,7 @@ contract("PredictionHandshake", (accounts) => {
                         await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator })
                 })
 
-                it("maker dispute", async () => {
+                it("taker dispute", async () => {
                         const i = {
                                 hid: 9,
                                 maker: maker1,
