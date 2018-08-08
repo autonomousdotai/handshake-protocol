@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "coverage": "./node_modules/.bin/solidity-coverage"
   },
   "repository": {
     "type": "git",
@@ -26,9 +27,10 @@
     "babel-polyfill": "^6.23.0",
     "babel-register": "^6.26.0",
     "dotenv": "^4.0.0",
-    "eth-gas-reporter": "^0.1.10",
     "openzeppelin-solidity": "1.10.0",
     "web3": "github:ethereum/web3.js"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "solidity-coverage": "^0.5.5"
+  }
 }

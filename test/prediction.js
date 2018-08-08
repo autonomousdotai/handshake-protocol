@@ -529,6 +529,7 @@ contract("PredictionHandshake", (accounts) => {
                                 outcome: 1
                         }
         
+                        await u.assertRevert(hs.resolve(i.hid, 0, OFFCHAIN, { from: root }));
                         const tx = await hs.resolve(i.hid, i.outcome, OFFCHAIN, { from: root });
                         const marketState = await hs.markets(4, { from: root });
                         
@@ -847,4 +848,121 @@ contract("PredictionHandshake", (accounts) => {
                 })
         })
 
+        describe('user story: dispute flows', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 30,
+                                disputeWindow: 50,
+                                creator: creator2 
+                        }
+                        const o = {
+                                hid: 9
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init", async () => {
+                        const i = {
+                                hid: 9,
+                                side: SUPPORT, 
+                                stake1: web3.toWei(0.1),
+                                stake2: web3.toWei(0.2),
+                                stake3: web3.toWei(0.3),
+                                odds1: 300,
+                                odds2: 350,
+                                odds3: 500,
+                                sender1: maker2,
+                                sender2: maker1,
+                                sender3: maker3
+                        }
+                        const o = {
+                                stake1: i.stake1,
+                                payout1: i.stake1 * i.odds1 / 100,
+
+                                stake2: i.stake2,
+                                payout2: i.stake2 * i.odds2 / 100,
+
+                                stake3: i.stake3,
+                                payout3: i.stake3 * i.odds3 / 100
+                        }
+                        let tx = await hs.init(i.hid, i.side, i.odds1, OFFCHAIN, {from: i.sender1, value: i.stake1})
+                        eq(o.stake1, await oc(tx, "__test__init", "stake"))
+
+                        tx = await hs.init(i.hid, i.side, i.odds2, OFFCHAIN, {from: i.sender2, value: i.stake2})
+                        eq(o.stake2, await oc(tx, "__test__init", "stake"))
+
+                        tx = await hs.init(i.hid, i.side, i.odds3, OFFCHAIN, {from: i.sender3, value: i.stake3})
+                        eq(o.stake3, await oc(tx, "__test__init", "stake"))
+                })
+
+                it("shake", async () => {
+                        const i = {
+                                hid: 9,
+                                side: AGAINST, 
+
+                                stake1: web3.toWei(0.1),
+                                takerOdds1: 150,
+                                makerOdds1: 300,
+                                maker1: maker2,
+                                sender1: taker1,
+
+                                stake2: web3.toWei(0.5),
+                                takerOdds2: 120,
+                                makerOdds2: 500,
+                                maker2: maker3,
+                                sender2: taker3
+                        }
+                        const o = {
+                                match_taker_stake: i.stake,
+                                match_taker_payout: i.stake * i.takerOdds / 100,
+                                match_maker_stake: web3.toWei(0.1),
+                                match_maker_payout: web3.toWei(0.3),
+                                open_maker_stake: web3.toWei(0.2),
+                                open_maker_payout: web3.toWei(0.6)
+                        }
+
+                        let tx = await hs.shake(i.hid, i.side, i.takerOdds1, i.maker1, i.makerOdds1, OFFCHAIN, {from: i.sender1, value: i.stake1})
+                        tx = await hs.shake(i.hid, i.side, i.takerOdds2, i.maker2, i.makerOdds2, OFFCHAIN, {from: i.sender2, value: i.stake2})
+                })
+
+                it("report outcome (support)", async () => {
+                        const i = {
+                                hid: 9,
+                                outcome: SUPPORT, 
+                                creator: creator2
+                        }
+                        u.increaseTime(10)
+                        await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator })
+                })
+
+                it("maker dispute", async () => {
+                        const i = {
+                                hid: 9,
+                                maker: maker1,
+                                taker1: taker1,
+                                taker2: taker3,
+                                creator: creator2
+                        }
+                        const o = {
+                                hid: 9,
+                                state_taker_1: 2,
+                                state_taker_3: 3
+                        }
+                        u.increaseTime(20)
+                        await u.assertRevert(hs.dispute(i.hid, OFFCHAIN, {from: i.maker}))
+                        let tx = await hs.dispute(i.hid, OFFCHAIN, {from: i.taker1})
+                        eq(o.hid, await oc(tx, "__dispute", "hid"))
+                        eq(o.state_taker_1, await oc(tx, "__dispute", "state"))
+
+                        tx = await hs.dispute(i.hid, OFFCHAIN, {from: i.taker2})
+                        eq(o.hid, await oc(tx, "__dispute", "hid"))
+                        eq(o.state_taker_3, await oc(tx, "__dispute", "state"))
+                })
+        })
 })
