@@ -488,7 +488,7 @@ contract PredictionHandshake {
         }
 
 
-        event __dispute(uint hid, uint state, bytes32 offchain);
+        event __dispute(uint hid, uint outcome, uint state, bytes32 offchain);
 
         // dispute outcome
         function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
@@ -522,7 +522,7 @@ contract PredictionHandshake {
                 if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * outcomeMatchedStake) {
                         m.state = 3;
                 }
-                emit __dispute(hid, m.state, offchain);
+                emit __dispute(hid, m.outcome, m.state, offchain);
         }
 
 
