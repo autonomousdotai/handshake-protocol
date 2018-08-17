@@ -502,13 +502,24 @@ contract PredictionHandshake {
                 m.disputed[msg.sender] = true;
 
                 // make sure user places bet on this side
-                uint stake = m.matched[msg.sender][3-m.outcome].stake;
-                require(stake > 0);
+                uint side = 3 - m.outcome;
+                uint stake = 0;
+                uint outcomeMatchedStake = 0;
+                if (side == 0) {
+                        stake = m.matched[msg.sender][1].stake;   
+                        stake += m.matched[msg.sender][2].stake;   
+                        outcomeMatchedStake = m.outcomeMatchedStake[1];
+                        outcomeMatchedStake += m.outcomeMatchedStake[2];
 
+                } else {
+                        stake = m.matched[msg.sender][side].stake;   
+                        outcomeMatchedStake = m.outcomeMatchedStake[side];
+                }
+                require(stake > 0);
                 m.disputeMatchedStake += stake;
 
                 // if dispute stakes > 50% of the total stakes
-                if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * m.outcomeMatchedStake[3-m.outcome]) {
+                if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * outcomeMatchedStake) {
                         m.state = 3;
                 }
                 emit __dispute(hid, m.state, offchain);
