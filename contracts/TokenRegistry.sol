@@ -16,11 +16,6 @@ contract TokenRegistry {
     address[] public tokens;
     address public owner;
     
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
     constructor() public {
         owner = msg.sender;
     }

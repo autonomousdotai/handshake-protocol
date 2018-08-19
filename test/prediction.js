@@ -356,7 +356,7 @@ contract("PredictionHandshake", (accounts) => {
                                 closingWindow: 1000,
                                 reportWindow: 2000,
                                 disputeWindow: 3000,
-                                creator: creator1 
+                                creator: creator2 
                         }
                         const o = {
                             hid: 3
@@ -372,16 +372,16 @@ contract("PredictionHandshake", (accounts) => {
                                 hid: 3,
                                 side: SUPPORT,
                                 odds: 100,
-                                stake: web3.toWei(1, 'ether'),
+                                stake: web3.toWei(0.01, 'ether'),
                                 maker: maker3,
-                                creator: creator1
+                                creator: root
                         }
         
-                        const tx = await hs.initTestDrive(i.hid, i.side, i.odds, i.maker, OFFCHAIN, { from: root, value: i.stake })
+                        const tx = await hs.initTestDrive(i.hid, i.side, i.odds, i.maker, OFFCHAIN, { from: i.creator, value: i.stake })
                         const trial = await hs.getOpenData(i.hid, i.side, i.maker, i.odds);
         
-                        eq(web3.toWei(1, 'ether'), trial[0].toNumber())
-                        eq(web3.toWei(1, 'ether'), await oc(tx, "__test__init", "stake"))    
+                        eq(web3.toWei(0.01, 'ether'), trial[0].toNumber())
+                        eq(web3.toWei(0.01, 'ether'), await oc(tx, "__test__init", "stake"))    
                 });
 
                 it('should be able to uninit for trial', async() => {
@@ -390,7 +390,7 @@ contract("PredictionHandshake", (accounts) => {
                                 side: SUPPORT,
                                 odds: 100,
                                 maker: maker3,
-                                value: web3.toWei(1, 'ether')
+                                value: web3.toWei(0.01, 'ether')
                         }
                       
                         const tx = await hs.uninitTestDrive(i.hid, i.side, i.odds, i.maker, i.value, OFFCHAIN, { from: root })
@@ -398,7 +398,7 @@ contract("PredictionHandshake", (accounts) => {
                         const total = await hs.total()
                         const trial = await hs.getOpenData(i.hid, i.side, i.maker, i.odds);
         
-                        assert.equal(web3.toWei(1, 'ether'), total)
+                        assert.equal(web3.toWei(0.01, 'ether'), total)
                         assert.equal(0, trial[0].toNumber())
                 });
 
@@ -848,7 +848,7 @@ contract("PredictionHandshake", (accounts) => {
                 })
         })
 
-        describe('user story: dispute flows', () => {
+        describe('user story: dispute flows (support wins)', () => {
 
                 it('should create the 3rd prediction market', async () => {
                         const i = {
@@ -963,6 +963,371 @@ contract("PredictionHandshake", (accounts) => {
                         tx = await hs.dispute(i.hid, OFFCHAIN, {from: i.taker2})
                         eq(o.hid, await oc(tx, "__dispute", "hid"))
                         eq(o.state_taker_3, await oc(tx, "__dispute", "state"))
+                })
+        })
+
+        describe('user story: dispute flows (draw)', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 30,
+                                disputeWindow: 50,
+                                creator: creator2 
+                        }
+                        const o = {
+                                hid: 10
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init", async () => {
+                        const i = {
+                                hid: 10,
+                                side: SUPPORT, 
+                                stake1: web3.toWei(0.1),
+                                stake2: web3.toWei(0.2),
+                                stake3: web3.toWei(0.3),
+                                odds1: 300,
+                                odds2: 350,
+                                odds3: 500,
+                                sender1: maker2,
+                                sender2: maker1,
+                                sender3: maker3
+                        }
+                        const o = {
+                                stake1: i.stake1,
+                                payout1: i.stake1 * i.odds1 / 100,
+
+                                stake2: i.stake2,
+                                payout2: i.stake2 * i.odds2 / 100,
+
+                                stake3: i.stake3,
+                                payout3: i.stake3 * i.odds3 / 100
+                        }
+                        let tx = await hs.init(i.hid, i.side, i.odds1, OFFCHAIN, {from: i.sender1, value: i.stake1})
+                        eq(o.stake1, await oc(tx, "__test__init", "stake"))
+
+                        tx = await hs.init(i.hid, i.side, i.odds2, OFFCHAIN, {from: i.sender2, value: i.stake2})
+                        eq(o.stake2, await oc(tx, "__test__init", "stake"))
+
+                        tx = await hs.init(i.hid, i.side, i.odds3, OFFCHAIN, {from: i.sender3, value: i.stake3})
+                        eq(o.stake3, await oc(tx, "__test__init", "stake"))
+                })
+
+                it("shake", async () => {
+                        const i = {
+                                hid: 10,
+                                side: AGAINST, 
+
+                                // maker 1
+                                makerOdds1: 300,
+                                maker1: maker2,
+
+                                // taker 1
+                                stake1: web3.toWei(0.1),
+                                takerOdds1: 150,
+                                sender1: taker1,
+
+                                // maker 2
+                                makerOdds2: 500,
+                                maker2: maker3,
+
+                                // taker 2
+                                stake2: web3.toWei(0.5),
+                                takerOdds2: 120,
+                                sender2: taker3
+                        }
+                        const o = {
+                                match_taker_stake1: web3.toWei(0.1),
+                                match_taker_payout1: web3.toWei(0.15),
+                                match_maker_stake1: web3.toWei(0.05),
+                                match_maker_payout1: web3.toWei(0.15),
+                                open_maker_stake1: web3.toWei(0.05)
+                        }
+
+                        let tx = await hs.shake(i.hid, i.side, i.takerOdds1, i.maker1, i.makerOdds1, OFFCHAIN, {from: i.sender1, value: i.stake1})
+                        eq(o.match_taker_stake1, await oc(tx, "__test__shake__taker__matched", "stake"))
+                        eq(o.match_taker_payout1, await oc(tx, "__test__shake__taker__matched", "payout"))
+
+                        eq(o.match_maker_stake1, await oc(tx, "__test__shake__maker__matched", "stake"))
+                        eq(o.match_maker_payout1, await oc(tx, "__test__shake__maker__matched", "payout"))
+
+                        eq(o.open_maker_stake1, await oc(tx, "__test__shake__maker__open", "stake"))
+
+                        tx = await hs.shake(i.hid, i.side, i.takerOdds2, i.maker2, i.makerOdds2, OFFCHAIN, {from: i.sender2, value: i.stake2})
+                })
+
+                it("report outcome (draw)", async () => {
+                        const i = {
+                                hid: 10,
+                                outcome: DRAW, 
+                                creator: creator2
+                        }
+                        u.increaseTime(10)
+                        await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator })
+                })
+
+                it("dispute", async () => {
+                        const i = {
+                                hid: 10,
+                                maker1: maker1,
+                                maker2: maker2,
+                                maker3: maker3,
+                                taker1: taker1,
+                                taker2: taker3,
+                                creator: creator2
+                        }
+                        const o = {
+                                hid: 10,
+                                state: 2,
+                                dispute_state: 3,
+                                outcome: DRAW
+                        }
+                        u.increaseTime(40)
+                        let tx = await hs.dispute(i.hid, OFFCHAIN, {from: i.taker1})
+                        eq(o.hid, await oc(tx, "__dispute", "hid"))
+                        eq(o.state, await oc(tx, "__dispute", "state"))
+                        eq(o.outcome, await oc(tx, "__dispute", "outcome"))
+
+                        await u.assertRevert(hs.dispute(i.hid, OFFCHAIN, {from: i.maker1}))
+
+                        tx = await hs.dispute(i.hid, OFFCHAIN, {from: i.maker2})
+                        eq(o.hid, await oc(tx, "__dispute", "hid"))
+                        eq(o.state, await oc(tx, "__dispute", "state"))
+                        eq(o.outcome, await oc(tx, "__dispute", "outcome"))
+
+                        tx = await hs.dispute(i.hid, OFFCHAIN, {from: i.taker2})
+                        eq(o.hid, await oc(tx, "__dispute", "hid"))
+                        eq(o.dispute_state, await oc(tx, "__dispute", "state"))
+                        eq(o.outcome, await oc(tx, "__dispute", "outcome"))
+                })
+        })
+
+        describe('user story: uninit (maker: play both real bet and free bet)', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 10,
+                                disputeWindow: 10,
+                                creator: creator1 
+                        }
+                        const o = {
+                                hid: 11
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init real bet", async () => {
+                        const i = {
+                                hid: 11,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.stake * i.odds / 100
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                })
+
+
+                it('should be able to init test drive', async() => {
+                        const i = {
+                                hid: 11,
+                                side: SUPPORT,
+                                odds: 300,
+                                stake: web3.toWei(0.01),
+                                maker: maker2,
+                                creator: root
+                        }
+        
+                        const tx = await hs.initTestDrive(i.hid, i.side, i.odds, i.maker, OFFCHAIN, { from: i.creator, value: i.stake })
+                        const trial = await hs.getOpenData(i.hid, i.side, i.maker, i.odds);
+        
+                        eq(web3.toWei(0.11, 'ether'), trial[0].toNumber())
+                        eq(web3.toWei(0.11, 'ether'), await oc(tx, "__test__init", "stake"))    
+                });
+
+
+                it("cannot uninit free bet + real bet", async () => {
+                        const i = {
+                                hid: 11,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.11),
+                                odds: 300,
+                                sender: maker2
+                        }
+                        
+                        await u.assertRevert(hs.uninit(i.hid, i.side, i.stake, i.odds, OFFCHAIN, {from: i.sender}))
+                })
+
+                it("uninit real bet", async () => {
+                        const i = {
+                                hid: 11,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker2
+                        }
+                        
+                        const tx = await hs.uninit(i.hid, i.side, i.stake, i.odds, OFFCHAIN, {from: i.sender})
+                        const trial = await hs.getOpenData(i.hid, i.side, i.sender, i.odds);
+        
+                        eq(web3.toWei(0.01, 'ether'), trial[0].toNumber())
+                })
+        })
+
+
+        describe('view match data', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 10,
+                                disputeWindow: 10,
+                                creator: creator2 
+                        }
+                        const o = {
+                                hid: 12
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init", async () => {
+                        const i = {
+                                hid: 12,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker3 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.stake * i.odds / 100
+                        }
+                        let tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+
+                        tx = await hs.getOpenData(i.hid, i.side, i.sender, i.odds, {from: root})
+                        eq(o.stake, tx[0].toNumber())
+                        eq(0, tx[1].toNumber())
+                })
+
+                it("shake", async () => {
+                        const i = {
+                                hid: 12,
+                                side: AGAINST, 
+                                stake: web3.toWei(0.2),
+                                takerOdds: 150,
+                                makerOdds: 300,
+                                maker: maker3,
+                                sender: taker1 
+                        }
+
+                        const o = {
+                                taker_stake: web3.toWei(0.2),
+                                taker_payout: web3.toWei(0.3)
+                        }
+
+                        let tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, {from: i.sender, value: i.stake})
+
+                        tx = await hs.getMatchedData(i.hid, i.side, i.sender, i.takerOdds, {from: root})
+                        eq(o.taker_stake, tx[0].toNumber())
+                        eq(o.taker_payout, tx[1].toNumber())
+                })
+        })
+
+        describe('user story: use free bet to play and collect money', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 10,
+                                disputeWindow: 10,
+                                creator: creator2 
+                        }
+                        const o = {
+                                hid: 13
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init", async () => {
+                        const i = {
+                                hid: 13,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.stake * i.odds / 100
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                })
+
+                it("shake test drive", async () => {
+                        const i = {
+                                hid: 13,
+                                side: AGAINST, 
+                                stake: web3.toWei(0.01),
+                                takerOdds: 150,
+                                makerOdds: 300,
+                                maker: maker2,
+                                sender: taker1 
+                        }
+                        const o = {
+                                match_taker_stake: i.stake,
+                                match_taker_payout: i.stake * i.takerOdds / 100,
+                        }
+                        const tx = await hs.shakeTestDrive(i.hid, i.side, i.sender, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, {from: root, value: i.stake})
+
+                        eq(o.match_taker_stake, await oc(tx, "__test__shake__taker__matched", "stake"))
+                        eq(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
+                })
+
+                it("report outcome (against)", async () => {
+                        const i = {
+                                hid: 13,
+                                outcome: AGAINST, 
+                                creator: creator2
+                        }
+                        u.increaseTime(10)
+                        await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator })
+                })
+
+
+                it("collect test drive", async () => {
+                        const i = {
+                                hid: 13,
+                                winner: taker1, 
+                                sender: root
+                        }
+                        u.increaseTime(20)
+                        await hs.collectTestDrive(i.hid, i.winner, OFFCHAIN, { from: i.sender })
                 })
         })
 })

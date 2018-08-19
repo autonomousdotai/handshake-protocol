@@ -189,4 +189,24 @@ contract("Token Registry", (accounts) => {
         });
     });
 
+
+    describe("get token info", () => {
+        it("get info of token 0", async() => {
+            const i = {
+                address: token0.address
+            }
+
+            const o = {
+                symbol: "SHURI",
+                name: "Shuriken",
+                decimals: 18
+            }
+            
+            var tx = await tokenRegistry.getTokenByAddr(i.address);
+            eq(o.symbol, tx[0]);
+            eq(o.name, tx[1]);
+            eq(o.decimals, tx[2].toNumber());
+        });
+    });
+
 })
