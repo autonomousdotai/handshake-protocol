@@ -131,4 +131,4 @@ Payer cancels Handshake and withdraws the escrowed ETH.
 
 All contributions, feature requests and issue reports are welcome. [Create an issue](https://github.com/cryptonomous/handshake/issues) to submit your requests or notify us of a bug.
 If you would like to add a feature, [make a pull request](https://github.com/cryptonomous/handshake/pulls).
-Thanks for trying Handshake! Join the conversation on Telegram: https://t.me/handshakeontheblockchain
+Thanks for trying Handshake! Join the conversation on Telegram: https://t.me/ninja_org
