@@ -295,17 +295,15 @@ contract("PredictionHandshakeWithToken", (accounts) => {
             }
             const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, i.amount, OFFCHAIN, { from: i.sender })
 
-            let takerMatchedData = await hs.getMatchedData(i.hid, i.sender, i.side)
-            let makerMatchedData = await hs.getMatchedData(i.hid, i.maker, 3 - i.side)
+            let takerMatchedData = await hs.getMatchedData(i.hid, i.side, i.sender, i.takerOdds)
+            let makerMatchedData = await hs.getMatchedData(i.hid, 3 - i.side, i.maker, i.makerOdds)
 
             eq(o.match_taker_stake.toNumber(), await takerMatchedData[0].toNumber());
             eq(o.match_taker_payout.toNumber(), await takerMatchedData[1].toNumber());
-
             eq(o.match_maker_stake.toNumber(), makerMatchedData[0].toNumber());
             eq(o.match_maker_payout.toNumber(), makerMatchedData[1].toNumber());
 
-            let makerOpenData = await hs.getOpenData(i.hid, i.maker, 3 - i.side)
-
+            let makerOpenData = await hs.getOpenData(i.hid, 3 - i.side, i.maker, i.makerOdds)
             eq(o.open_maker_stake.toNumber(), makerOpenData[0].toNumber());
 
         })
@@ -331,8 +329,8 @@ contract("PredictionHandshakeWithToken", (accounts) => {
             const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, i.amount, OFFCHAIN, { from: i.sender })
 
 
-            let takerMatchedData = await hs.getMatchedData(i.hid, i.sender, i.side)
-            let makerMatchedData = await hs.getMatchedData(i.hid, i.maker, 3 - i.side)
+            let takerMatchedData = await hs.getMatchedData(i.hid, i.side, i.sender, i.takerOdds)
+            let makerMatchedData = await hs.getMatchedData(i.hid, 3 - i.side, i.maker, i.makerOdds)
 
             eq(o.match_taker_stake.toNumber(), await takerMatchedData[0].toNumber());
             eq(o.match_taker_payout.toNumber(), await takerMatchedData[1].toNumber());
@@ -340,10 +338,11 @@ contract("PredictionHandshakeWithToken", (accounts) => {
             eq(o.match_maker_stake.toNumber(), makerMatchedData[0].toNumber());
             eq(o.match_maker_payout.toNumber(), makerMatchedData[1].toNumber());
 
-            let makerOpenData = await hs.getOpenData(i.hid, i.maker, 3 - i.side)
-
+            let makerOpenData = await hs.getOpenData(i.hid, 3 - i.side, i.maker, i.makerOdds)
             eq(o.open_maker_stake.toNumber(), makerOpenData[0].toNumber());
+
         });
+
     });
 
     describe('collect payouts', () => {
@@ -518,10 +517,10 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 match_maker_payout: web3.toBigNumber(200*(10**18) * i.makerOdds / 100),
                 open_maker_stake: web3.toBigNumber(0)
             }
-            const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, i.value, OFFCHAIN, { from: i.taker });
+            const tx = await hs.shake(i.hid, i.side, i.takerOdds, i.maker, i.makerOdds, i.value, OFFCHAIN, { from: i.taker});
             
-            let takerMatchedData = await hs.getMatchedData(i.hid, i.taker, AGAINST)
-            let makerMatchedData = await hs.getMatchedData(i.hid, i.maker, SUPPORT)
+            let takerMatchedData = await hs.getMatchedData(i.hid, AGAINST, i.taker, i.takerOdds)
+            let makerMatchedData = await hs.getMatchedData(i.hid, SUPPORT, i.maker, i.makerOdds)
 
             eq(o.match_taker_stake.toNumber(), await takerMatchedData[0].toNumber());
             eq(o.match_taker_payout.toNumber(), await takerMatchedData[1].toNumber());
@@ -529,8 +528,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
             eq(o.match_maker_stake.toNumber(), makerMatchedData[0].toNumber());
             eq(o.match_maker_payout.toNumber(), makerMatchedData[1].toNumber());
 
-            let makerOpenData = await hs.getOpenData(i.hid, i.maker, 3 - i.side)
-
+            let makerOpenData = await hs.getOpenData(i.hid, 3 - i.side, i.maker, i.makerOdds)
             eq(o.open_maker_stake.toNumber(), makerOpenData[0].toNumber());
         });
 

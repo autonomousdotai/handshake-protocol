@@ -100,7 +100,7 @@ contract PredictionHandshake {
         } 
 
 
-        event __createMarket(uint hid, bytes32 offchain); 
+        event __createMarket(uint hid, bytes32 offchain);
 
         function createMarket(
                 uint fee, 
@@ -112,8 +112,38 @@ contract PredictionHandshake {
         ) 
                 public 
         {
+                _createMarket(msg.sender, fee, source, closingWindow, reportWindow, disputeWindow, offchain);
+        }
+
+
+        function createMarketForShurikenUser(
+                address creator,
+                uint fee, 
+                bytes32 source,
+                uint closingWindow, 
+                uint reportWindow, 
+                uint disputeWindow,
+                bytes32 offchain
+        ) 
+                public 
+                onlyRoot
+        {
+                _createMarket(creator, fee, source, closingWindow, reportWindow, disputeWindow, offchain);
+        }
+
+        function _createMarket(
+                address creator,
+                uint fee, 
+                bytes32 source,
+                uint closingWindow, 
+                uint reportWindow, 
+                uint disputeWindow,
+                bytes32 offchain
+        ) 
+                public 
+        {
                 Market memory m;
-                m.creator = msg.sender;
+                m.creator = creator;
                 m.fee = fee;
                 m.source = source;
                 m.closingTime = now + closingWindow * 1 seconds;

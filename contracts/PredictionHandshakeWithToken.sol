@@ -36,22 +36,39 @@ contract PredictionHandshakeWithToken {
         uint totalMatchedStake;
         uint disputeMatchedStake;
         bool resolved;
+        mapping(uint => uint) outcomeMatchedStake;
 
         mapping(address => mapping(uint => Order)) open; // address => side => order
         mapping(address => mapping(uint => Order)) matched; // address => side => order
         mapping(address => bool) disputed;
     }
-
-    function getOpenData(uint hid, address user, uint side) public onlyRoot view returns(uint, uint)  {
-        Market storage m = markets[hid];
-        Order storage o = m.open[user][side];
-        return (o.stake, o.payout);
-    }
-
-    function getMatchedData(uint hid, address user, uint side) public onlyRoot view returns(uint, uint)  {
+    
+    function getMatchedData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
+    (
+        uint256,
+        uint256,
+        uint256,
+        uint256
+    ) 
+    {
         Market storage m = markets[hid];
         Order storage o = m.matched[user][side];
-        return (o.stake, o.payout);
+        // return (stake, payout, odds, pool size)
+        return (o.stake, o.payout, userOdds, o.odds[userOdds]);
+    }
+        
+    function getOpenData(uint hid, uint side, address user, uint userOdds) public onlyRoot view returns 
+    (
+        uint256,
+        uint256,
+        uint256,
+        uint256
+    ) 
+    {
+        Market storage m = markets[hid];
+        Order storage o = m.open[user][side];
+        // return (stake, payout, odds, pool size)
+        return (o.stake, o.payout, userOdds, o.odds[userOdds]);
     }
 
     struct Order {
@@ -62,7 +79,7 @@ contract PredictionHandshakeWithToken {
 
     uint public NETWORK_FEE = 20; // 20%
     uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
-    uint public DISPUTE_THRESHOLD = 5; // 5%
+    uint public DISPUTE_THRESHOLD = 50; // 50%
     uint public EXPIRATION = 30 days; 
 
     Market[] public markets;
@@ -282,12 +299,14 @@ contract PredictionHandshakeWithToken {
         m.matched[maker][makerSide].stake += makerStake;
         m.matched[maker][makerSide].payout += makerPayout;
         m.totalMatchedStake += makerStake;
+        m.outcomeMatchedStake[makerSide] += makerStake;
 
         // add taker's order to matched
         m.matched[msg.sender][side].odds[takerOdds] += takerStake;
         m.matched[msg.sender][side].stake += takerStake;
         m.matched[msg.sender][side].payout += takerPayout;
         m.totalMatchedStake += takerStake;
+        m.outcomeMatchedStake[side] += takerStake;
 
         emit __shake(hid, offchain);
     }
@@ -401,11 +420,25 @@ contract PredictionHandshakeWithToken {
         require(!m.disputed[msg.sender]);
         m.disputed[msg.sender] = true;
 
-        m.disputeMatchedStake += m.matched[msg.sender][1].stake;
-        m.disputeMatchedStake += m.matched[msg.sender][2].stake;
+        // make sure user places bet on this side
+        uint side = 3 - m.outcome;
+        uint stake = 0;
+        uint outcomeMatchedStake = 0;
+        if (side == 0) {
+            stake = m.matched[msg.sender][1].stake;   
+            stake += m.matched[msg.sender][2].stake;   
+            outcomeMatchedStake = m.outcomeMatchedStake[1];
+            outcomeMatchedStake += m.outcomeMatchedStake[2];
 
-        // if dispute stakes > 5% of the total stakes
-        if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * m.totalMatchedStake) {
+        } else {
+            stake = m.matched[msg.sender][side].stake;   
+            outcomeMatchedStake = m.outcomeMatchedStake[side];
+        }
+        require(stake > 0);
+        m.disputeMatchedStake += stake;
+
+        // if dispute stakes > 50% of the total stakes
+        if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * outcomeMatchedStake) {
             m.state = 3;
         }
         emit __dispute(hid, m.state, offchain);
@@ -417,9 +450,10 @@ contract PredictionHandshakeWithToken {
     function resolve(uint hid, uint outcome, bytes32 offchain) public onlyRoot {
         Market storage m = markets[hid]; 
         require(m.state == 3);
+        require(outcome == 1 || outcome == 2 || outcome == 3);
         m.resolved = true;
         m.outcome = outcome;
-        m.state = outcome == 0? 1: 2;
+        m.state = 2;
         emit __resolve(hid, offchain);
     }
 
