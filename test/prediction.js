@@ -1323,4 +1323,29 @@ contract("PredictionHandshake", (accounts) => {
                         await hs.collectTestDrive(i.hid, i.winner, OFFCHAIN, { from: i.sender })
                 })
         })
+
+        describe('user story: use shuriken to create market', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 10,
+                                disputeWindow: 10,
+                                creator: creator2
+                        }
+                        const o = {
+                                hid: 14,
+                                creator: creator2
+                        }
+
+                        await u.assertRevert(hs.createMarketForShurikenUser(i.creator, i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator}))
+                        const tx = await hs.createMarketForShurikenUser(i.creator, i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: root})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+
+                        const market = await hs.markets(14, { from: root });
+                        eq(market[0], o.creator);
+                })
+        })
 })

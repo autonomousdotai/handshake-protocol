@@ -101,19 +101,9 @@ contract PredictionHandshakeWithToken {
         _;
     }
 
-    // grant permission for this contract to send ERC20 token
-    function approveNewTokens(address[] _tokenAddresses) public onlyRoot {
-        for(uint i = 0; i < _tokenAddresses.length; i++) {
-            if (tokenRegistry.tokenIsExisted(_tokenAddresses[i]) == true) {
-                require(
-                    Token(_tokenAddresses[i]).approve(tokenRegistryAddress, 2**256-1)
-                );
-            } 
-        }
-    }
-
     event __approveNewToken(bytes32 offchain); 
 
+    // grant permission for this contract to send ERC20 token
     function approveNewToken(address tokenAddress, bytes32 offchain) public onlyRoot {
         if (tokenRegistry.tokenIsExisted(tokenAddress) == true) {
             require(
@@ -243,6 +233,9 @@ contract PredictionHandshakeWithToken {
     }
 
     event __shake(uint hid, bytes32 offchain);
+    event __test__shake__taker__matched(uint stake, uint payout);
+    event __test__shake__maker__matched(uint stake, uint payout);
+    event __test__shake__maker__open(uint stake);
 
     // market taker
     function shake(
@@ -309,6 +302,10 @@ contract PredictionHandshakeWithToken {
         m.outcomeMatchedStake[side] += takerStake;
 
         emit __shake(hid, offchain);
+
+        emit __test__shake__taker__matched(m.matched[msg.sender][side].stake, m.matched[msg.sender][side].payout);
+        emit __test__shake__maker__matched(m.matched[maker][makerSide].stake, m.matched[maker][makerSide].payout);
+        emit __test__shake__maker__open(m.open[maker][makerSide].stake);
     }
 
 
@@ -407,7 +404,7 @@ contract PredictionHandshakeWithToken {
     }
 
 
-    event __dispute(uint hid, uint state, bytes32 offchain);
+    event __dispute(uint hid, uint outcome, uint state, bytes32 offchain);
 
     // dispute outcome
     function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
@@ -441,7 +438,7 @@ contract PredictionHandshakeWithToken {
         if (100 * m.disputeMatchedStake > DISPUTE_THRESHOLD * outcomeMatchedStake) {
             m.state = 3;
         }
-        emit __dispute(hid, m.state, offchain);
+        emit __dispute(hid, m.outcome, m.state, offchain);
     }
 
 
