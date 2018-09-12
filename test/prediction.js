@@ -1348,4 +1348,94 @@ contract("PredictionHandshake", (accounts) => {
                         eq(market[0], o.creator);
                 })
         })
+
+
+        describe('user story: user plays free bet be able to dispute outcome', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                closingWindow: 10,
+                                reportWindow: 30,
+                                disputeWindow: 50,
+                                creator: creator2 
+                        }
+                        const o = {
+                                hid: 15
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init", async () => {
+                        const i = {
+                                hid: 15,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.stake * i.odds / 100
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                })
+
+                it("shake test drive", async () => {
+                        const i = {
+                                hid: 15,
+                                side: AGAINST, 
+                                stake: web3.toWei(0.01),
+                                takerOdds: 150,
+                                makerOdds: 300,
+                                maker: maker2,
+                                sender: taker1 
+                        }
+                        const o = {
+                                match_taker_stake: i.stake,
+                                match_taker_payout: i.stake * i.takerOdds / 100,
+                        }
+                        const tx = await hs.shakeTestDrive(i.hid, i.side, i.sender, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, {from: root, value: i.stake})
+
+                        eq(o.match_taker_stake, await oc(tx, "__test__shake__taker__matched", "stake"))
+                        eq(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
+                })
+
+                it("report outcome (support)", async () => {
+                        const i = {
+                                hid: 15,
+                                outcome: SUPPORT, 
+                                creator: creator2
+                        }
+                        u.increaseTime(10)
+                        await hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator })
+                })
+
+
+                it("dispute", async () => {
+                        const i = {
+                                hid: 15,
+                                maker: maker2,
+                                taker: taker1
+                        }
+                        const o = {
+                                hid: 15,
+                                state: 2,
+                                dispute_state: 3,
+                                outcome: SUPPORT
+                        }
+                        u.increaseTime(40)
+                        let tx = await hs.disputeTestDrive(i.hid, i.taker, OFFCHAIN, {from: root})
+                        eq(o.hid, await oc(tx, "__dispute", "hid"))
+                        eq(o.dispute_state, await oc(tx, "__dispute", "state").toNumber())
+                        eq(o.outcome, await oc(tx, "__dispute", "outcome").toNumber())
+
+                        await u.assertRevert(hs.dispute(i.hid, OFFCHAIN, {from: i.maker}))
+                })
+
+        })
 })

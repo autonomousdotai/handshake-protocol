@@ -331,11 +331,11 @@ contract PredictionHandshake {
                 payable 
                 onlyRoot
         {
-                trial[msg.sender].hid = hid;
-                trial[msg.sender].side = side;
-                trial[msg.sender].amt[takerOdds] += msg.value;
-                trial[msg.sender].totalStakes[hid] += msg.value;
-                trial[msg.sender].valid = true;
+                trial[taker].hid = hid;
+                trial[taker].side = side;
+                trial[taker].amt[takerOdds] += msg.value;
+                trial[taker].totalStakes[hid] += msg.value;
+                trial[taker].valid = true;
 
                 _shake(hid, side, taker, takerOdds, maker, makerOdds, offchain);
         }
@@ -520,29 +520,39 @@ contract PredictionHandshake {
 
         event __dispute(uint hid, uint outcome, uint state, bytes32 offchain);
 
-        // dispute outcome
+
+        function disputeTestDrive(uint hid, address sender, bytes32 offchain) public onlyRoot {
+                require(trial[sender].hid == hid && trial[sender].valid);
+                _dispute(hid, sender, offchain);
+        }        
+
         function dispute(uint hid, bytes32 offchain) public onlyPredictor(hid) {
+                _dispute(hid, msg.sender, offchain);
+        }
+
+        // dispute outcome
+        function _dispute(uint hid, address sender, bytes32 offchain) private {
                 Market storage m = markets[hid]; 
 
                 require(now <= m.disputeTime);
                 require(m.state == 2);
                 require(!m.resolved);
 
-                require(!m.disputed[msg.sender]);
-                m.disputed[msg.sender] = true;
+                require(!m.disputed[sender]);
+                m.disputed[sender] = true;
 
                 // make sure user places bet on this side
                 uint side = 3 - m.outcome;
                 uint stake = 0;
                 uint outcomeMatchedStake = 0;
                 if (side == 0) {
-                        stake = m.matched[msg.sender][1].stake;   
-                        stake += m.matched[msg.sender][2].stake;   
+                        stake = m.matched[sender][1].stake;   
+                        stake += m.matched[sender][2].stake;   
                         outcomeMatchedStake = m.outcomeMatchedStake[1];
                         outcomeMatchedStake += m.outcomeMatchedStake[2];
 
                 } else {
-                        stake = m.matched[msg.sender][side].stake;   
+                        stake = m.matched[sender][side].stake;   
                         outcomeMatchedStake = m.outcomeMatchedStake[side];
                 }
                 require(stake > 0);
