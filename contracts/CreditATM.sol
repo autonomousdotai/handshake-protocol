@@ -6,6 +6,7 @@ contract CreditATM {
 
     constructor() public {
         owner = msg.sender;
+        addAdmin(owner);
     }
 
     struct Exchange {
@@ -15,9 +16,12 @@ contract CreditATM {
     }
 
     Exchange[] public ex;
+    address[] public ad;
 
+    event __addAdmin(uint length, address ad);
+    event __rAdmin(uint length, address ad);
     event __deposit(uint hid, address stationOwner, uint value,uint percentage, bytes32 offchain);
-    event __releasePartialFund(uint hid,address customer,uint amount,bytes32 offchain);
+    event __releasePartialFund(address customer,uint amount,bytes32 offchain);
 
 
     //success if sender is owner
@@ -25,6 +29,65 @@ contract CreditATM {
         require(msg.sender == owner);
         _;
     }
+
+    //success if sender is owner
+    modifier onlyAdmin() {
+        bool isAdmin = false;
+        for (uint i = 0; i < ad.length; i++) {
+            if(msg.sender == ad[i]){
+                isAdmin = true;
+                break;
+            }
+        }
+        require(isAdmin);
+        _;
+    }
+
+    /**
+    * @dev add admin
+    * @param a is the admin address
+    */
+    function addAdmin(
+        address a
+    )
+        public
+        onlyOwner()
+    {
+        require(a != 0x0 );
+        bool isUnique = true;
+        for (uint i = 0; i < ad.length; i++) {
+            if(a == ad[i]){
+                isUnique = false;
+                break;
+            }
+        }
+        require(isUnique);
+        ad.push(a);
+        emit __addAdmin(ad.length - 1, a);
+    }
+
+     /**
+    * @dev remove admin
+    * @param a is the admin address
+    */
+    function rAdmin(
+        address a
+    )
+        public
+        onlyOwner()
+    {
+        require(a != 0x0 );
+        for (uint i = 0; i < ad.length; i++) {
+            if(a == ad[i]){
+                delete ad[i];
+                ad.length--;
+                break;
+            }
+        }
+
+        emit __rAdmin(ad.length - 1, a);
+    }
+
 
     /**
     * @dev deposit coin to escrow
@@ -48,11 +111,11 @@ contract CreditATM {
 
 
     //Owner releaseFundByStationOwner transaction
-    function releasePartialFund(uint hid,address customer,uint amount, bytes32 offchain) public onlyOwner()
+    function releasePartialFund(address customer,uint amount, bytes32 offchain) public onlyAdmin()
     {
         require(customer != 0x0 && amount > 0);
         customer.transfer(amount);
-        emit __releasePartialFund(hid,customer, amount, offchain);
+        emit __releasePartialFund(customer, amount, offchain);
     }
 
     //get deposit info by hid
