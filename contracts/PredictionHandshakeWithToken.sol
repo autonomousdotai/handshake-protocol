@@ -113,7 +113,7 @@ contract PredictionHandshakeWithToken {
         }
     }
 
-    event __createMarket(uint hid, bytes32 offchain); 
+    event __createMarket(uint hid, uint closingTime, uint reportTime, uint disputeTime, bytes32 offchain); 
 
     function createMarket(
         uint fee, 
@@ -172,7 +172,7 @@ contract PredictionHandshakeWithToken {
         m.state = 1;
         markets.push(m);
 
-        emit __createMarket(markets.length - 1, offchain);
+        emit __createMarket(markets.length - 1, m.closingTime, m.reportTime, m.disputeTime, offchain);
     }
 
 
