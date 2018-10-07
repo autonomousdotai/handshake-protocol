@@ -36,6 +36,7 @@ contract PredictionHandshakeWithToken {
         uint totalMatchedStake;
         uint disputeMatchedStake;
         bool resolved;
+        bool isGrantedPermission;
         mapping(uint => uint) outcomeMatchedStake;
 
         mapping(address => mapping(uint => Order)) open; // address => side => order
@@ -79,7 +80,7 @@ contract PredictionHandshakeWithToken {
 
     uint public NETWORK_FEE = 20; // 20%
     uint public ODDS_1 = 100; // 1.00 is 100; 2.25 is 225 
-    uint public DISPUTE_THRESHOLD = 50; // 50%
+    uint public DISPUTE_THRESHOLD = 80; // 50%
     uint public EXPIRATION = 30 days; 
 
     Market[] public markets;
@@ -119,6 +120,7 @@ contract PredictionHandshakeWithToken {
         uint fee, 
         bytes32 source,
         address tokenAddress,
+        bool isGrantedPermission,
         uint closingWindow, 
         uint reportWindow, 
         uint disputeWindow,
@@ -127,7 +129,7 @@ contract PredictionHandshakeWithToken {
         public 
         tokenExisted(tokenAddress)
     {
-        _createMarket(msg.sender, fee, source, tokenAddress, closingWindow, reportWindow, disputeWindow, offchain);
+        _createMarket(msg.sender, fee, source, tokenAddress, isGrantedPermission, closingWindow, reportWindow, disputeWindow, offchain);
     }
 
 
@@ -136,6 +138,7 @@ contract PredictionHandshakeWithToken {
         uint fee, 
         bytes32 source,
         address tokenAddress,
+        bool isGrantedPermission,
         uint closingWindow, 
         uint reportWindow, 
         uint disputeWindow,
@@ -145,7 +148,7 @@ contract PredictionHandshakeWithToken {
         tokenExisted(tokenAddress)
         onlyRoot
     {
-        _createMarket(creator, fee, source, tokenAddress, closingWindow, reportWindow, disputeWindow, offchain);
+        _createMarket(creator, fee, source, tokenAddress, isGrantedPermission, closingWindow, reportWindow, disputeWindow, offchain);
     }
 
 
@@ -154,6 +157,7 @@ contract PredictionHandshakeWithToken {
         uint fee, 
         bytes32 source,
         address tokenAddress,
+        bool isGrantedPermission,
         uint closingWindow, 
         uint reportWindow, 
         uint disputeWindow,
@@ -166,6 +170,7 @@ contract PredictionHandshakeWithToken {
         m.fee = fee;
         m.source = source;
         m.token = tokenAddress;
+        m.isGrantedPermission = isGrantedPermission;
         m.closingTime = now + closingWindow * 1 seconds;
         m.reportTime = m.closingTime + reportWindow * 1 seconds;
         m.disputeTime = m.reportTime + disputeWindow * 1 seconds;
@@ -393,7 +398,20 @@ contract PredictionHandshakeWithToken {
     event __report(uint hid, bytes32 offchain);
 
     // report outcome
+    function reportForCreator(uint hid, uint outcome, bytes32 offchain) 
+        public
+        onlyRoot
+    {
+        Market storage m = markets[hid]; 
+        require(m.isGrantedPermission);
+        _report(hid, outcome, offchain);
+    }
+
     function report(uint hid, uint outcome, bytes32 offchain) public {
+        _report(hid, outcome, offchain);
+    }
+
+    function _report(uint hid, uint outcome, bytes32 offchain) private {
         Market storage m = markets[hid]; 
         require(now <= m.reportTime);
         require(msg.sender == m.creator);
@@ -457,9 +475,9 @@ contract PredictionHandshakeWithToken {
 
     modifier onlyPredictor(uint hid) {
         require(markets[hid].matched[msg.sender][1].stake > 0 ||
-                markets[hid].matched[msg.sender][2].stake > 0 || 
-                markets[hid].open[msg.sender][1].stake > 0 || 
-                markets[hid].open[msg.sender][2].stake > 0);
+            markets[hid].matched[msg.sender][2].stake > 0 || 
+            markets[hid].open[msg.sender][1].stake > 0 ||
+            markets[hid].open[msg.sender][2].stake > 0);
         _;
     }
 
