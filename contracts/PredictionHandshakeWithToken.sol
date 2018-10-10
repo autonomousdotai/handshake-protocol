@@ -404,17 +404,17 @@ contract PredictionHandshakeWithToken {
     {
         Market storage m = markets[hid]; 
         require(m.isGrantedPermission);
-        _report(hid, outcome, offchain);
+        _report(hid, m.creator, outcome, offchain);
     }
 
     function report(uint hid, uint outcome, bytes32 offchain) public {
-        _report(hid, outcome, offchain);
+        _report(hid, msg.sender, outcome, offchain);
     }
 
-    function _report(uint hid, uint outcome, bytes32 offchain) private {
+    function _report(uint hid, address sender, uint outcome, bytes32 offchain) private {
         Market storage m = markets[hid]; 
         require(now <= m.reportTime);
-        require(msg.sender == m.creator);
+        require(sender == m.creator);
         require(m.state == 1);
         m.outcome = outcome;
         m.state = 2;

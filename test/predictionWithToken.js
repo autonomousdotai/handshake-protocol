@@ -763,4 +763,121 @@ contract("PredictionHandshakeWithToken", (accounts) => {
             eq(o.outcome, await oc(tx, "__dispute", "outcome").toNumber())
         })
     })
+
+    describe('user story: user grant permission for admin to report outcome', () => {
+
+        it('should create the 3rd prediction market', async () => {
+                const i = {
+                    fee: 1,
+                    source: s2b("livescore.com"),
+                    token: token.address,
+                    isGrantedPermission: true,
+                    closingWindow: 10,
+                    reportWindow: 30,
+                    disputeWindow: 50,
+                    creator: creator2 
+                }
+                const o = {
+                    hid: 6
+                }
+
+                const tx = await hs.createMarket(i.fee, i.source, i.token, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                eq(o.hid, await oc(tx, "__createMarket", "hid"))
+        })
+
+        it("init", async () => {
+            const i = {
+                hid: 6,
+                side: SUPPORT, 
+                stake1: web3.toHex(0.1*(10**18)),
+                stake2: web3.toHex(0.2*(10**18)),
+                stake3: web3.toHex(0.3*(10**18)),
+                odds1: 300,
+                odds2: 350,
+                odds3: 500,
+                sender1: maker2,
+                sender2: maker1,
+                sender3: maker3
+            }
+            const o = {
+                stake1: i.stake1,
+                payout1: i.stake1 * i.odds1 / 100,
+
+                stake2: i.stake2,
+                payout2: i.stake2 * i.odds2 / 100,
+
+                stake3: i.stake3,
+                payout3: i.stake3 * i.odds3 / 100
+            }
+
+            let tx = await hs.init(i.hid, i.side, i.odds1, i.stake1, OFFCHAIN, {from: i.sender1})
+            eq(o.stake1, await oc(tx, "__test__init", "stake").toNumber())
+
+            tx = await hs.init(i.hid, i.side, i.odds2, i.stake2, OFFCHAIN, {from: i.sender2})
+            eq(o.stake2, await oc(tx, "__test__init", "stake").toNumber())
+
+            tx = await hs.init(i.hid, i.side, i.odds3, i.stake3, OFFCHAIN, {from: i.sender3})
+            eq(o.stake3, await oc(tx, "__test__init", "stake").toNumber())
+        })
+
+        it("shake", async () => {
+            const i = {
+                hid: 6,
+                side: AGAINST, 
+
+                // maker 1
+                makerOdds1: 300,
+                maker1: maker2,
+
+                // taker 1
+                stake1: web3.toHex(0.1*(10**18)),
+                takerOdds1: 150,
+                sender1: taker1,
+
+                // maker 2
+                makerOdds2: 500,
+                maker2: maker3,
+
+                // taker 2
+                stake2: web3.toHex(0.5*(10**18)),
+                takerOdds2: 120,
+                sender2: taker3
+            }
+
+            const o = {
+                match_taker_stake1: web3.toHex(0.1*(10**18)),
+                match_taker_payout1: web3.toHex(0.15*(10**18)),
+                match_maker_stake1: web3.toHex(0.05*(10**18)),
+                match_maker_payout1: web3.toHex(0.15*(10**18)),
+                open_maker_stake1: web3.toHex(0.05*(10**18))
+            }
+            
+            let tx = await hs.shake(i.hid, i.side, i.takerOdds1, i.maker1, i.makerOdds1, i.stake1, OFFCHAIN, {from: i.sender1})
+            eq(o.match_taker_stake1, await oc(tx, "__test__shake__taker__matched", "stake").toNumber())
+            eq(o.match_taker_payout1, await oc(tx, "__test__shake__taker__matched", "payout").toNumber())
+
+            eq(o.match_maker_stake1, await oc(tx, "__test__shake__maker__matched", "stake").toNumber())
+            eq(o.match_maker_payout1, await oc(tx, "__test__shake__maker__matched", "payout").toNumber())
+
+            eq(o.open_maker_stake1, await oc(tx, "__test__shake__maker__open", "stake").toNumber())
+
+            tx = await hs.shake(i.hid, i.side, i.takerOdds2, i.maker2, i.makerOdds2, i.stake2, OFFCHAIN, {from: i.sender2})
+        })
+
+        it("report outcome (draw)", async () => {
+            const i = {
+                hid: 6,
+                outcome: DRAW, 
+                creator: creator2,
+                root: root
+            }
+            u.increaseTime(10)
+            await u.assertRevert(hs.report(i.hid, i.outcome, OFFCHAIN, {from: maker1}))
+
+            // admin report this match
+            await hs.reportForCreator(i.hid, i.outcome, OFFCHAIN, { from: i.root })
+            await u.assertRevert(hs.report(i.hid, i.outcome, OFFCHAIN, { from: i.creator }))
+        })
+    });
+    
 });

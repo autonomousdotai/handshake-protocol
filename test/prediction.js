@@ -1454,4 +1454,77 @@ contract("PredictionHandshake", (accounts) => {
                 })
 
         })
+
+
+        describe('user story: user grant permission for admin to report outcome', () => {
+
+                it('should create the 3rd prediction market', async () => {
+                        const i = {
+                                fee: 1,
+                                source: s2b("livescore.com"),
+                                isGrantedPermission: true,
+                                closingWindow: 10,
+                                reportWindow: 30,
+                                disputeWindow: 50,
+                                creator: creator1 
+                        }
+                        const o = {
+                                hid: 16
+                        }
+
+                        const tx = await hs.createMarket(i.fee, i.source, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                        eq(o.hid, await oc(tx, "__createMarket", "hid"))
+                })
+
+                it("init", async () => {
+                        const i = {
+                                hid: 16,
+                                side: SUPPORT, 
+                                stake: web3.toWei(0.1),
+                                odds: 300,
+                                sender: maker2 
+                        }
+                        const o = {
+                                stake: i.stake,
+                                payout: i.stake * i.odds / 100
+                        }
+                        const tx = await hs.init(i.hid, i.side, i.odds, OFFCHAIN, {from: i.sender, value: i.stake})
+                        eq(o.stake, await oc(tx, "__test__init", "stake"))
+                })
+
+                it("shake test drive", async () => {
+                        const i = {
+                                hid: 16,
+                                side: AGAINST, 
+                                stake: web3.toWei(0.01),
+                                takerOdds: 150,
+                                makerOdds: 300,
+                                maker: maker2,
+                                sender: taker1 
+                        }
+                        const o = {
+                                match_taker_stake: i.stake,
+                                match_taker_payout: i.stake * i.takerOdds / 100,
+                        }
+                        const tx = await hs.shakeTestDrive(i.hid, i.side, i.sender, i.takerOdds, i.maker, i.makerOdds, OFFCHAIN, {from: root, value: i.stake})
+
+                        eq(o.match_taker_stake, await oc(tx, "__test__shake__taker__matched", "stake"))
+                        eq(o.match_taker_payout, await oc(tx, "__test__shake__taker__matched", "payout"))
+                })
+
+                it("report outcome (support)", async () => {
+                        const i = {
+                                hid: 16,
+                                outcome: SUPPORT, 
+                                creator: creator2,
+                                root: root
+                        }
+                        u.increaseTime(10)
+                        await u.assertRevert(hs.report(i.hid, i.outcome, OFFCHAIN, {from: maker1}))
+
+                        // admin report this match
+                        await hs.reportForCreator(i.hid, i.outcome, OFFCHAIN, { from: i.root })
+                        await u.assertRevert(hs.report(i.hid, i.outcome, OFFCHAIN, {from: i.creator}))
+                })
+        })
 })
