@@ -25,7 +25,6 @@ contract RedeemHandshake {
     function initRedeem(uint amount, bytes32[] codes, uint fee, bytes32 offchain) 
         public 
         payable
-        onlyRoot
     {
         require(msg.value == amount + (amount * fee) / 100);
         Redeem memory r;
