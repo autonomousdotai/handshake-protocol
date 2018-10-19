@@ -155,7 +155,6 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 fee: 2,
                 source: s2b("livescore.com"),
                 tokenAddress: token.address,
-                isGrantedPermission: false,
                 closingWindow: 10,
                 reportWindow: 10,
                 disputeWindow: 10,
@@ -165,7 +164,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 hid: 0
             }
 
-            const tx = await hs.createMarket(i.fee, i.source, i.tokenAddress, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+            const tx = await hs.createMarket(i.fee, i.source, i.tokenAddress, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
             eq(o.hid, await oc(tx, "__createMarket", "hid"))
         });
@@ -175,7 +174,6 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 fee: 1,
                 source: s2b("livescore.com"),
                 tokenAddress: token.address,
-                isGrantedPermission: false,
                 closingWindow: 10,
                 reportWindow: 10,
                 disputeWindow: 10,
@@ -185,7 +183,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 hid: 1
             }
 
-            const tx = await hs.createMarket(i.fee, i.source, i.tokenAddress, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+            const tx = await hs.createMarket(i.fee, i.source, i.tokenAddress, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
             eq(o.hid, await oc(tx, "__createMarket", "hid"))
         });
@@ -411,7 +409,6 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 fee: 1,
                 source: s2b("livescore.com"),
                 token: token.address,
-                isGrantedPermission: false,
                 closingWindow: 10,
                 reportWindow: 10,
                 disputeWindow: 10,
@@ -421,7 +418,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 hid: 2
             }
 
-            const tx = await hs.createMarket(i.fee, i.source, i.token, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+            const tx = await hs.createMarket(i.fee, i.source, i.token, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
 
             eq(o.hid, await oc(tx, "__createMarket", "hid"))
         });
@@ -473,7 +470,6 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 fee: 0,
                 source: s2b("livescore.com"),
                 token: token.address,
-                isGrantedPermission: false,
                 closingWindow: 10,
                 reportWindow: 10,
                 disputeWindow: 10,
@@ -483,7 +479,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                 hid: 3
             }
 
-            const tx = await hs.createMarket(i.fee, i.source, i.token, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator })
+            const tx = await hs.createMarket(i.fee, i.source, i.token, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator })
 
             assert.equal(o.hid, await oc(tx, "__createMarket", "hid"))
         });
@@ -624,7 +620,6 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                     fee: 1,
                     source: s2b("livescore.com"),
                     token: token.address,
-                    isGrantedPermission: false,
                     closingWindow: 10,
                     reportWindow: 30,
                     disputeWindow: 50,
@@ -634,7 +629,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                     hid: 5
                 }
 
-                const tx = await hs.createMarket(i.fee, i.source, i.token, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                const tx = await hs.createMarket(i.fee, i.source, i.token, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
                 eq(o.hid, await oc(tx, "__createMarket", "hid"))
         })
 
@@ -771,7 +766,6 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                     fee: 1,
                     source: s2b("livescore.com"),
                     token: token.address,
-                    isGrantedPermission: true,
                     closingWindow: 10,
                     reportWindow: 30,
                     disputeWindow: 50,
@@ -781,7 +775,7 @@ contract("PredictionHandshakeWithToken", (accounts) => {
                     hid: 6
                 }
 
-                const tx = await hs.createMarket(i.fee, i.source, i.token, i.isGrantedPermission, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
+                const tx = await hs.createMarket(i.fee, i.source, i.token, i.closingWindow, i.reportWindow, i.disputeWindow, OFFCHAIN, { from: i.creator})
                 eq(o.hid, await oc(tx, "__createMarket", "hid"))
         })
 

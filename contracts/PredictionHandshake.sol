@@ -106,7 +106,6 @@ contract PredictionHandshake {
         function createMarket(
                 uint fee, 
                 bytes32 source,
-                bool isGrantedPermission,
                 uint closingWindow, 
                 uint reportWindow, 
                 uint disputeWindow,
@@ -114,7 +113,7 @@ contract PredictionHandshake {
         ) 
                 public 
         {
-                _createMarket(msg.sender, fee, source, isGrantedPermission, closingWindow, reportWindow, disputeWindow, offchain);
+                _createMarket(msg.sender, fee, source, true, closingWindow, reportWindow, disputeWindow, offchain);
         }
 
 

@@ -120,7 +120,6 @@ contract PredictionHandshakeWithToken {
         uint fee, 
         bytes32 source,
         address tokenAddress,
-        bool isGrantedPermission,
         uint closingWindow, 
         uint reportWindow, 
         uint disputeWindow,
@@ -129,7 +128,7 @@ contract PredictionHandshakeWithToken {
         public 
         tokenExisted(tokenAddress)
     {
-        _createMarket(msg.sender, fee, source, tokenAddress, isGrantedPermission, closingWindow, reportWindow, disputeWindow, offchain);
+        _createMarket(msg.sender, fee, source, tokenAddress, true, closingWindow, reportWindow, disputeWindow, offchain);
     }
 
 
