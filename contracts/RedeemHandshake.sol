@@ -19,20 +19,20 @@ contract RedeemHandshake {
         root = msg.sender;
     } 
 
-    event __initRedeem(uint rid, bytes32 offchain);
+    event __initRedeem(uint rid, uint fee, bytes32 offchain);
 
     function initRedeem(uint amount, uint fee, bytes32 offchain) 
         public 
         payable
     {
-        require(msg.value == amount + (amount * fee) / 100);
+        require(msg.value == amount + fee);
         Redeem memory r;
         r.creator = msg.sender;
         r.stake = amount;
         redeems.push(r);
 
-        root.transfer((amount * fee) / 100);
-        emit __initRedeem(redeems.length - 1, offchain);
+        root.transfer(fee);
+        emit __initRedeem(redeems.length - 1, fee, offchain);
     }
 
 
